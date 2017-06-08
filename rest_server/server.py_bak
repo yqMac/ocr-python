@@ -1,0 +1,53 @@
+import base64
+import json
+from BaseHTTPServer import BaseHTTPRequestHandler
+import sys
+sys.path.append("..")
+import inference
+import model
+from model.captcha_cracker import CaptchaCracker
+
+# theano.config.floatX = "float64"
+
+lstm_model_params_prefix = ("/Users/rookie/antiSpider/theano/Captcha-Decoder/rest_server/lstm")
+
+
+cracker = model.captcha_cracker.CaptchaCracker(
+    lstm_model_params_prefix,
+    includeCapital=False,
+    multi_chars=True,
+    rescale_in_preprocessing=False,
+    num_rnn_steps=5,
+    use_mask_input=True)
+
+class GetHandler(BaseHTTPRequestHandler):
+    def do_POST(self):
+        self.send_response(200)
+        self.end_headers()
+
+        content_len = int(self.headers.getheader('content-length'))
+        post_body = self.rfile.read(content_len)
+
+        data = json.loads(post_body)
+
+        # fix blank
+        str = data['file_content']
+        missing_padding = 4 - len(str) % 4
+        if missing_padding:
+            str += b'=' * missing_padding
+        file_content = base64.b64decode(str)
+        # get charCode
+        print type(file_content), len(file_content), file_content
+        result = inference.read_and_parse(file_content,cracker)
+        #result
+        print result
+        self.wfile.write(result)
+        return
+
+
+if __name__ == '__main__':
+    from BaseHTTPServer import HTTPServer
+
+    server = HTTPServer(('0.0.0.0', 8088), GetHandler)
+    print 'Starting server, use <Ctrl-C> to stop'
+    server.serve_forever()
