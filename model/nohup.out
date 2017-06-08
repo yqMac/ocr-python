@@ -1,0 +1,12 @@
+Traceback (most recent call last):
+  File "captcha_cracker.py", line 321, in <module>
+    Run(arguments)
+  File "captcha_cracker.py", line 247, in Run
+    use_mask_input=args.use_mask_input)
+  File "captcha_cracker.py", line 58, in Train
+    l_err = train_fn(*train_inputs)
+  File "/usr/local/lib/python2.7/site-packages/theano/compile/function_module.py", line 859, in __call__
+    outputs = self.fn()
+  File "/usr/local/lib/python2.7/site-packages/theano/gof/op.py", line 911, in rval
+    def rval(p=p, i=node_input_storage, o=node_output_storage, n=node):
+KeyboardInterrupt
