@@ -8,8 +8,6 @@ import parse_args
 import sys
 
 sys.path.append("..")
-# log_file=open("pyout.log","w")
-## sys.stdout=log_file
 
 from model.nn_model import Model
 import training_data_gen.utils as utils
@@ -187,15 +185,21 @@ class EvalMatrix:
 
 
 def Run(args, num_epochs=100, multi_chars=True, num_softmaxes=None):
-    training_data_dir = args.TrainingDirc
-    val_data_file = args.ValidateDirc
-    test_data_file = args.TestDirc
+    pre_dir = os.path.dirname(os.getcwd())
+    base_dir = pre_dir + "/" + args.TrainingModeId
+    os.makedirs(base_dir+"/result")
+
+    training_data_dir = base_dir+"/trian_npz"
+    val_data_file = base_dir+"/validate_npz/validate_npy.npz"
+    test_data_file = base_dir+"/test_npz/test_npy.npz"
     # multi_char = args.multichar
-    model_params_file_prefix = args.ModelParamsFile
+    model_params_file_prefix = base_dir+"/result/"+args.ResultPre
+
+    # model_params_file_prefix = args.ModelParamsFile
     global BATCH_SIZE
     global TEST_BATCH_SIZE
     includeCapital = args.includeCapital
-    length = 6 if not args.length else int(args.length)
+    length = args.length
     bidirec = args.bidirec
     cnn_dense_layer_sizes = [int(args.cnn_dense_layer_sizes)]
     print(cnn_dense_layer_sizes, bidirec)
