@@ -1,5 +1,6 @@
 # 修改后的theano验证码识别
-### 项目基于https://github.com/yqMac/Captcha-Decoder，theano及其他依赖库只能使用旧版，切记注意    
+### 项目基于https://github.com/yqMac/Captcha-Decoder
+### theano及其他依赖库只能使用旧版，切记注意    
 
 更新apt-get  
 apt-get update  
