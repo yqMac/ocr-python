@@ -38,10 +38,7 @@ make && makeinstall
 异常： Could not find a version that satisfies the requirement pip (from versions: )  
 No matching distribution found for pip  
 受够了，直接apt-get install python-pip安装了  
-然后自己给自己升级 pip  install -U pip  
-
-#正则匹配删除文件  
-ls |grep [A-Z] |xargs rm -rf  
+然后自己给自己升级 pip  install -U pip   
   
 ### 修复yum  
 export PATH=$PATH:/usr/local/lib/python2.7/dist-packages  
