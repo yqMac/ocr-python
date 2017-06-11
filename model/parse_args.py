@@ -6,9 +6,9 @@ def parse_arg():
     parser = argparse.ArgumentParser()
 
     parser.add_argument("TrainingModeId", help="The id created when training")
-    parser.add_argument("-img_height", "--img_height", metavar='\b', help="img_height", type=int, default=70)
-    parser.add_argument("-img_width", "--img_width", metavar='\b', help="img_width", type=int, default=160)
-    parser.add_argument("-length", "--length", help="Length of the characters", metavar='\b', type=int, default=5)
+    parser.add_argument("img_height",  help="img_height", type=int, default=70)
+    parser.add_argument("img_width",  help="img_width", type=int, default=160)
+    parser.add_argument("length", help="Length of the characters", type=int, default=5)
     parser.add_argument("-ResultPre", help="stored result with this file", default="lstm_")
 
     parser.add_argument("-batchsize", "--batchsize", type=int, default=500, help="Training batch size", metavar='\b')

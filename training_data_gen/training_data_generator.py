@@ -174,21 +174,20 @@ def formatNpzDir(npz_path):
             copyFile(src_dir, train_dir, file_name)
 def main(args):
     # 上层目录
-    # pre_cwd = os.path.dirname(os.getcwd())
-    # dir_id = pre_cwd + "/" + str(uuid.uuid1()).replace("-", "")
-    # print dir_id
-    #
-    # image_dir = args.image_dir
-    # npz_dir = dir_id
-    #
-    # print "图片路径：{0}，训练集生成目录：{1}".format(image_dir, npz_dir)
-    # captcha_pattern = re.compile(args.captcha_pattern)
-    # print args
-    # # # TrainingData.GenerateTrainingData(sys.argv[1], sys.argv[2])
-    # TrainingData.GenerateTrainingData(image_dir, npz_dir, captcha_pattern, args.max_size, args.length, args.ignore_case)
+    pre_cwd = os.path.dirname(os.getcwd())
+    dir_id = pre_cwd + "/" + str(uuid.uuid1()).replace("-", "")
+    print dir_id
+
+    image_dir = args.image_dir
+    npz_dir = dir_id
+
+    print "图片路径：{0}，训练集生成目录：{1}".format(image_dir, npz_dir)
+    captcha_pattern = re.compile(args.captcha_pattern)
+
+    TrainingData.GenerateTrainingData(image_dir, npz_dir, captcha_pattern, args.max_size, args.length, args.ignore_case)
     # TrainingData.GenerateTrainingData(image_dir, npz_dir, captcha_pattern, 1000, args.length, args.ignore_case)
 
-    formatNpzDir("/Users/rookie/PyWorker/testtheano/a3ff4dcc4e6d11e7a7654c32758b0f1b")
+    # formatNpzDir("/Users/rookie/PyWorker/testtheano/a3ff4dcc4e6d11e7a7654c32758b0f1b")
 
 
 if __name__ == '__main__':
