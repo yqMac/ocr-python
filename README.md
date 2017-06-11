@@ -59,7 +59,7 @@ nohup Python manage.py runserver 0.0.0.0:9000 &
   
 # 生成训练集
 进入training_data_gen 目录  
-运行python training_data_gen image_dir max_size length -ignore_case=True -captcha_pattern='^\d+_(.*)\..+$'  
+运行python training_data_gen.py image_dir max_size length -ignore_case=True -captcha_pattern='^\d+_(.*)\..+$'  
 可以根据train_parse_args文件查看详细含义：  
   * image_dir为图片存储目录  
   * max_size为多少张图片一个训练集文件  
@@ -69,13 +69,28 @@ nohup Python manage.py runserver 0.0.0.0:9000 &
 训练的结果默认会存在一个工程目录下uuid目录下。
 # 训练model  
 进入model目录  
-运行python  captcha_cracker TrainingModeId img_height img_width length -ResultPre  
+运行python  captcha_cracker.py TrainingModeId img_height img_width length -ResultPre  
 可以根据parse_arg 文件查看配置详细含义或者更详细配置  
   * TrainingModeId 为生成训练集时位置的uuid  
   * img_height 图片高度  
   * img_width 图片宽度  
   * length 验证码字符数量  
   * ResultPre 生成的model的前缀，默认为lstm_  
-# 最终结果会存储在uuid目录下得result目录下，并跟随训练进度不断更新。当训练成功率满意以后即可停止训练。
+### 最终结果会存储在uuid目录下得result目录下，并跟随训练进度不断更新。当训练成功率满意以后即可停止训练。
 
 # 搭建识别环境
+rest-server
+ * 将训练结果集以lstm_(.*?)_{site}_{num}_npy.npz文件名存放于rest_server目录下lstm目录中  
+ 例如 ：lstm_ydzhejiang_170606_10001_5_npy.npz  
+ * name为名称，site为自定义的随机标示，num为验证码字符数量  
+ 上例中ydzhejiang_170606为自定义名称，10001为site，5为字符数量  
+ * 运行 python server.py  默认端口为8088
+# 调用验证码识别
+http 方式 调用，参数为  
+{  
+  "site":10001,  
+  "image":"base64的图片"  
+}  
+其中site为搭建环境中自定义标示site  
+image为验证码图片的base64位编码，注意要去掉前缀  
+调用
