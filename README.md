@@ -80,7 +80,7 @@ nohup Python manage.py runserver 0.0.0.0:9000 &
 
 # 搭建识别环境
 rest-server
- * 将训练结果集以lstm_(.*?)_{site}_{num}_npy.npz文件名存放于rest_server目录下lstm目录中  
+ * 将训练结果集以lstm_(.*?)__{site}__{num}__npy.npz文件名存放于rest_server目录下lstm目录中  
  例如 ：lstm_ydzhejiang_170606_10001_5_npy.npz  
  * name为名称，site为自定义的随机标示，num为验证码字符数量  
  上例中ydzhejiang_170606为自定义名称，10001为site，5为字符数量  
