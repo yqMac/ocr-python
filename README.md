@@ -76,5 +76,6 @@ nohup Python manage.py runserver 0.0.0.0:9000 &
   * img_width 图片宽度  
   * length 验证码字符数量  
   * ResultPre 生成的model的前缀，默认为lstm_  
-# 训练model根据
-# 训练model根据
+# 最终结果会存储在uuid目录下得result目录下，并跟随训练进度不断更新。当训练成功率满意以后即可停止训练。
+
+# 搭建识别环境
