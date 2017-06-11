@@ -1,10 +1,10 @@
 # testtheano
-更新apt-get 
-apt-get update
+更新apt-get  
+apt-get update  
+  
 
-
-GCC
-apt-get install build-essential 
+GCC  
+apt-get install build-essential  
 
 
 # python2.7
