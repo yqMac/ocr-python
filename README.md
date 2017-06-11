@@ -1,6 +1,6 @@
-# testtheano
-更新apt-get  
-apt-get update  
+# 修改后的theano验证码识别
+更新apt-get  
+apt-get update  
   
 
 GCC  
