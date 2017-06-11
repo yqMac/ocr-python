@@ -150,9 +150,10 @@ def GetLatestModelFile(params_file_prefix):
 class EvalMatrix:
     def __init__(self, prefix):
         parent_direc = os.path.dirname(prefix)
-        print(prefix)
+        # print(prefix)
         prefix = prefix.rsplit("/", 1)[1]
-        print(prefix)
+        print ("save result with prefix:{0}".format(prefix))
+
         self.training_time = os.path.join(parent_direc, "_training_time_" + prefix + ".csv")
         self.training_loss = os.path.join(parent_direc, "_training_loss_" + prefix + ".csv")
         self.training_acc = os.path.join(parent_direc, "_training_acc_" + prefix + ".csv")
@@ -187,7 +188,8 @@ class EvalMatrix:
 def Run(args, num_epochs=100, multi_chars=True, num_softmaxes=None):
     pre_dir = os.path.dirname(os.getcwd())
     base_dir = pre_dir + "/" + args.TrainingModeId
-    os.makedirs(base_dir+"/result")
+    if not os.path.exists(base_dir+"/result"):
+        os.makedirs(base_dir+"/result")
 
     training_data_dir = base_dir+"/trian_npz"
     val_data_file = base_dir+"/validate_npz/validate_npy.npz"
@@ -224,6 +226,8 @@ def Run(args, num_epochs=100, multi_chars=True, num_softmaxes=None):
     print('Compiling model')
     captcha_model = Model(
         learning_rate=learning_rate,
+        # image_shape=(None, 1, 45, 110),
+        image_shape=(None, 1, args.img_height, args.img_width),
         no_hidden_layers=no_hidden_layers,
         includeCapital=includeCapital,
         num_rnn_steps=length,
@@ -280,6 +284,7 @@ class CaptchaCracker(object):
         if type(cnn_dense_layer_sizes) == type(1):
             cnn_dense_layer_sizes = [cnn_dense_layer_sizes]
         self.captcha_model = Model(
+            # image_shape=(None, 1, args.img_height, args.img_width),
             saved_params_path=latest_model_params_file, includeCapital=includeCapital,
             multi_chars=multi_chars, num_softmaxes=num_softmaxes, num_rnn_steps=num_rnn_steps,
             use_mask_input=use_mask_input, lstm_layer_units=lstm_layer_units,

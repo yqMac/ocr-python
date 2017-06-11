@@ -13,7 +13,7 @@ class Model(object):
     class for creating a model.
     '''
 
-    def __init__(self, learning_rate=0.01, no_hidden_layers=2, includeCapital=False,
+    def __init__(self, image_shape,learning_rate=0.01, no_hidden_layers=2, includeCapital=False,
                  num_rnn_steps=4, saved_params_path=None, multi_chars=True,
                  num_softmaxes=None, use_mask_input=False, lstm_layer_units=256,
                  cnn_dense_layer_sizes=[256], bidirec=False, lstm_grad_clipping=False):
@@ -32,17 +32,17 @@ class Model(object):
         if multi_chars:
             if num_softmaxes:
                 self._network, self._train_fn, self._test_fn, self._inference_fn = (
-                    self._InitializeModelThatPredictsCharsMultiSoftmax(self.learning_rate, num_softmaxes=num_softmaxes))
+                    self._InitializeModelThatPredictsCharsMultiSoftmax(self.learning_rate,image_shape, num_softmaxes=num_softmaxes))
             else:
                 self._network, self._train_fn, self._test_fn, self._inference_fn = (
                     self._InitializeModelThatPredictsAllChars(
-                        self.learning_rate, use_mask_input=use_mask_input,
+                        self.learning_rate, image_shape,use_mask_input=use_mask_input,
                         lstm_layer_units=lstm_layer_units, cnn_dense_layer_sizes=cnn_dense_layer_sizes,
                         bidirectional_rnn=bidirec,
                         lstm_grad_clipping=lstm_grad_clipping))
         else:
             self._network, self._train_fn, self._test_fn, self._inference_fn = (
-                self._InitializeModelThatPredictsFirstChar(self.learning_rate))
+                self._InitializeModelThatPredictsFirstChar(self.learning_rate,image_shape))
         self.prediction = lasagne.layers.get_output(self._network)
         if saved_params_path:
             '''
@@ -82,9 +82,9 @@ class Model(object):
             self.max_pool_size = max_pool_size
 
     @classmethod
-    def _InitializeModelThatPredictsFirstChar(cls, learning_rate):
+    def _InitializeModelThatPredictsFirstChar(cls, learning_rate,image_shape):
         image_input = T.tensor4('image_input')
-        prediction_layer = cls._BuildModelToPredictFirstChar(image_input)
+        prediction_layer = cls._BuildModelToPredictFirstChar(image_input,image_shape)
 
         target_chars = T.imatrix('target_chars')
         target_char = target_chars[:, 0]
@@ -134,12 +134,13 @@ class Model(object):
     def _BuildModelToPredictFirstChar(
             self,
             image_input,
+            image_shape,
             cnn_max_pool_configs=None,
             cnn_dense_layer_sizes=[256]):
         if cnn_max_pool_configs is None:
             cnn_max_pool_configs = self._DefaultCNNMaxPoolConfigs()
-        network = lasagne.layers.InputLayer(shape=(None, 1, 45, 110),
-                                            input_var=image_input)
+        # network = lasagne.layers.InputLayer(shape=(None, 1, 45, 110),input_var=image_input)
+        network = lasagne.layers.InputLayer(shape=image_shape,input_var=image_input)
         network = self._BuildCNN(network, cnn_max_pool_configs, cnn_dense_layer_sizes)
 
         # And, finally, the softmax layer with 50% dropout on its inputs:
@@ -149,12 +150,12 @@ class Model(object):
             nonlinearity=lasagne.nonlinearities.softmax)
         return network
 
-    def _InitializeModelThatPredictsCharsMultiSoftmax(self, learning_rate, num_softmaxes=5):
+    def _InitializeModelThatPredictsCharsMultiSoftmax(self, learning_rate,image_shape,num_softmaxes=5):
         image_input = T.tensor4('image_input')
         print("num_of_softmax: " + str(num_softmaxes))
         # prediction_layer = self._BuildModelToPredictFirstChar(image_input)
         prediction_layer = self._BuildModelToPredictCharsMultiSoftmax(
-            image_input, num_softmaxes=num_softmaxes)
+            image_input,image_shape, num_softmaxes=num_softmaxes)
 
         target_chars_input = T.imatrix('target_chars_input')
         target_chars = target_chars_input[:, :num_softmaxes].reshape(shape=(-1,))
@@ -215,14 +216,15 @@ class Model(object):
     def _BuildModelToPredictCharsMultiSoftmax(
             self,
             image_input,
+            image_shape,
             num_softmaxes=5,
             cnn_max_pool_configs=None,
             cnn_dense_layer_sizes=[256],
             softmax_dense_layer_size=256):
         if cnn_max_pool_configs is None:
             cnn_max_pool_configs = self._DefaultCNNMaxPoolConfigs()
-        network = lasagne.layers.InputLayer(shape=(None, 1, 45, 110),
-                                            input_var=image_input)
+        # network = lasagne.layers.InputLayer(shape=(None, 1, 45, 110),input_var=image_input)
+        network = lasagne.layers.InputLayer(shape=image_shape,input_var=image_input)
         cnn_dense_layer_sizes = [x * num_softmaxes for x in cnn_dense_layer_sizes]
         network = self._BuildCNN(network, cnn_max_pool_configs, cnn_dense_layer_sizes)
         # network = self._BuildImageNetCNN(network)
@@ -246,7 +248,7 @@ class Model(object):
         return l_softmax
 
     def _InitializeModelThatPredictsAllChars(
-            self, learning_rate, bidirectional_rnn=False, use_mask_input=False,
+            self, learning_rate,image_shape, bidirectional_rnn=False, use_mask_input=False,
             lstm_layer_units=256, cnn_dense_layer_sizes=[256], lstm_grad_clipping=False):
         image_input = T.tensor4('image_input')
         num_rnn_steps = self.num_rnn_steps
@@ -261,7 +263,7 @@ class Model(object):
             mask_input = mask_input_input[:, :num_rnn_steps]
             # mask_input = mask_input.reshape(shape=(-1,))
         prediction_layer, l_cnn, l_lstm = self._BuildModelToPredictAllChars(
-            image_input, num_rnn_steps=num_rnn_steps, mask_input=mask_input,
+            image_input,image_shape, num_rnn_steps=num_rnn_steps, mask_input=mask_input,
             bidirectional_rnn=bidirectional_rnn, lstm_layer_units=lstm_layer_units,
             cnn_dense_layer_sizes=cnn_dense_layer_sizes,
             lstm_grad_clipping=lstm_grad_clipping)
@@ -346,6 +348,7 @@ class Model(object):
     def _BuildModelToPredictAllChars(
             self,
             image_input,
+            image_shape,
             num_rnn_steps,
             mask_input=None,
             cnn_max_pool_configs=None,
@@ -357,8 +360,8 @@ class Model(object):
             lstm_grad_clipping=False):
         if cnn_max_pool_configs is None:
             cnn_max_pool_configs = self._DefaultCNNMaxPoolConfigs()
-        network = lasagne.layers.InputLayer(shape=(None, 1, 45, 110),
-                                            input_var=image_input)
+        # network = lasagne.layers.InputLayer(shape=(None, 1, 45, 110),input_var=image_input)
+        network = lasagne.layers.InputLayer(shape=image_shape,input_var=image_input)
         if mask_input:
             mask_input = lasagne.layers.InputLayer(shape=(None, num_rnn_steps),
                                                    input_var=mask_input)
