@@ -56,3 +56,7 @@ pip install Pillow
 
 # 后台运行  
 nohup Python manage.py runserver 0.0.0.0:9000 &  
+  
+# 生成训练集
+进入training_data_gen 目录
+运行python image_dir max_size length -ignore_case=True -captcha_pattern='^\d+_(.*)\..+$'
