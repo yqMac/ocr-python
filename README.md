@@ -59,10 +59,22 @@ nohup Python manage.py runserver 0.0.0.0:9000 &
   
 # 生成训练集
 进入training_data_gen 目录  
-运行python image_dir max_size length -ignore_case=True -captcha_pattern='^\d+_(.*)\..+$'  
+运行python training_data_gen image_dir max_size length -ignore_case=True -captcha_pattern='^\d+_(.*)\..+$'  
 可以根据train_parse_args文件查看详细含义：  
   * image_dir为图片存储目录  
   * max_size为多少张图片一个训练集文件  
   * length为一张图片的字符数量  
   * ignore_case为是否忽略字符大小写默认True  
-  * captcha_pattern为图片的名字的正则，group1为正确标签  
+  * captcha_pattern为图片的名字的正则，group1为正确标签  
+训练的结果默认会存在一个工程目录下uuid目录下。
+# 训练model  
+进入model目录  
+运行python  captcha_cracker TrainingModeId img_height img_width length -ResultPre  
+可以根据parse_arg 文件查看配置详细含义或者更详细配置  
+  * TrainingModeId 为生成训练集时位置的uuid  
+  * img_height 图片高度  
+  * img_width 图片宽度  
+  * length 验证码字符数量  
+  * ResultPre 生成的model的前缀，默认为lstm_  
+# 训练model根据
+# 训练model根据
