@@ -37,13 +37,13 @@ No matching distribution found for pip
 受够了，直接apt-get install python-pip安装了  
 然后自己给自己升级 pip  install -U pip  
 
-# 正则匹配删除文件  
+#正则匹配删除文件  
 ls |grep [A-Z] |xargs rm -rf  
   
-修复yum  
+### 修复yum  
 export PATH=$PATH:/usr/local/lib/python2.7/dist-packages  
 pip easy_install 软连接。  
-安装依赖库：  
+# 安装依赖库：  
 pip -V  
 pip install numpy  
 pip install scipy  
@@ -54,5 +54,5 @@ pip install pydot==1.1.0
 pip install simply  
 pip install Pillow  
 
-后台运行  
+# 后台运行  
 nohup Python manage.py runserver 0.0.0.0:9000 &  
