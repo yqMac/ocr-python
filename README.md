@@ -66,7 +66,7 @@ nohup Python manage.py runserver 0.0.0.0:9000 &
   * length为一张图片的字符数量  
   * ignore\_case为是否忽略字符大小写默认True  
   * captcha\_pattern为图片的名字的正则，group1为正确标签   
-  ###训练的结果默认会存在一个工程目录下uuid目录下###
+###训练的结果默认会存在一个工程目录下uuid目录下###
 # 训练model  
 进入model目录  
 运行python  captcha_cracker.py TrainingModeId img\_height img\_width length -ResultPre  
