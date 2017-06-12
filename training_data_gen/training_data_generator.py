@@ -6,7 +6,7 @@ import re
 import uuid
 import sys
 import train_parse_args
-
+sys.path.append("..")
 from training_data_gen.image_preprocessor import ImagePreprocessor
 import training_data_gen.vocabulary as vocabulary
 import training_data_gen.utils as utils
