@@ -84,6 +84,9 @@ rest-server
  * name为名称，site为自定义的随机标示，num为验证码字符数量  
  上例中ydzhejiang_170606为自定义名称，10001为site，5为字符数量  
  * 运行 python server.py  默认端口为8088
+ ### 后台运行
+nohup Python server.py &
+
 # 调用验证码识别
 http 方式 调用，参数为  
 {  
