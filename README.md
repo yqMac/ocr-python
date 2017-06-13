@@ -78,13 +78,14 @@ pip install Pillow
 ### 最终结果会存储在uuid目录下得result目录下，并跟随训练进度不断更新。当训练成功率满意以后即可停止训练。
 
 # 搭建识别环境
-rest-server
+### rest-server
  * 将训练结果集以lstm_(.*?)\_{site}\_{num}\_npy.npz文件名存放于rest_server目录下lstm目录中  
  例如 ：lstm\_ydzhejiang\_170606\_10001\_5_npy.npz  
  * name为名称，site为自定义的随机标示，num为验证码字符数量  
  上例中ydzhejiang_170606为自定义名称，10001为site，5为字符数量  
  * 运行 python server.py  默认端口为8088
- ### 后台运行
+
+### 后台运行
 nohup Python server.py &
 
 # 调用验证码识别
@@ -96,5 +97,4 @@ http 方式 调用，参数为
 其中site为搭建环境中自定义标示site  
 image为验证码图片的base64位编码  
 ###注意要去掉图片编码后的base64前缀调用
-### 后台运行
-nohup Python server.py &
+
