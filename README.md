@@ -54,8 +54,7 @@ pip install pydot==1.1.0
 pip install simply  
 pip install Pillow  
 
-# 后台运行  
-nohup Python manage.py runserver 0.0.0.0:9000 &  
+
   
 # 生成训练集
 进入training_data_gen 目录  
@@ -94,3 +93,5 @@ http 方式 调用，参数为
 其中site为搭建环境中自定义标示site  
 image为验证码图片的base64位编码  
 ###注意要去掉图片编码后的base64前缀调用
+### 后台运行
+nohup Python server.py &
