@@ -37,11 +37,11 @@ def _ParseCaptchaFromImageFilename(image_filepath, captcha_pattern):
     return match.group(1)
 
 
-def _GetCaptchaIdsFromImageFilename(image_filepath, captcha_pattern, ignore_case):
+def _GetCaptchaIdsFromImageFilename(image_filepath, captcha_pattern, case_sensitive):
     captcha_str = _ParseCaptchaFromImageFilename(image_filepath, captcha_pattern)
     captcha_ids = numpy.zeros(len(captcha_str), dtype=numpy.int32)
     for i, captcha_char in enumerate(captcha_str):
-        CHAR_VOCABULARY, CHARS = vocabulary.GetCharacterVocabulary(ignore_case)
+        CHAR_VOCABULARY, CHARS = vocabulary.GetCharacterVocabulary(case_sensitive)
         captcha_ids[i] = CHAR_VOCABULARY[captcha_char]
     return captcha_ids
 
