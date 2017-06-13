@@ -83,7 +83,7 @@ class TrainingData(object):
                              captcha_pattern,
                              max_size=3000,
                              max_captcha_length=5,
-                             ignore_case=False
+                             case_sensitive=False
                              ):
         os.makedirs(training_data_dir + "/allnpz")
 
@@ -104,7 +104,7 @@ class TrainingData(object):
             i += 1
             index = i % max_size
             training_image_data[index] = ImagePreprocessor.ProcessImage(image_data)
-            captcha_ids = _GetCaptchaIdsFromImageFilename(captcha_filepath, captcha_pattern, ignore_case)
+            captcha_ids = _GetCaptchaIdsFromImageFilename(captcha_filepath, captcha_pattern, case_sensitive)
             training_labels[index, :] = numpy.zeros(max_captcha_length,
                                                     dtype=numpy.int32)
             training_labels[index, :captcha_ids.shape[0]] = captcha_ids
@@ -184,7 +184,7 @@ def main(args):
     print "图片路径：{0}，训练集生成目录：{1}".format(image_dir, npz_dir)
     captcha_pattern = re.compile(args.captcha_pattern)
 
-    TrainingData.GenerateTrainingData(image_dir, npz_dir, captcha_pattern, args.max_size, args.length, args.ignore_case)
+    TrainingData.GenerateTrainingData(image_dir, npz_dir, captcha_pattern, args.max_size, args.length, args.case_sensitive)
     # TrainingData.GenerateTrainingData(image_dir, npz_dir, captcha_pattern, 1000, args.length, args.ignore_case)
 
     # formatNpzDir("/Users/rookie/PyWorker/testtheano/a3ff4dcc4e6d11e7a7654c32758b0f1b")
