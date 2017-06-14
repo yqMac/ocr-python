@@ -20,10 +20,13 @@ cracker_map = {}
 for one in list_model:
     if not one.endswith(".npz"):
         continue
+    h = one.split("_")[-5]
+    w = one.split("_")[-4]
     id = one.split("_")[-3]
     num = one.split("_")[-2]
     id_cracker = model.captcha_cracker.CaptchaCracker(
         os.getcwd()+"/lstm/" + one,
+        (None, 1,h, w),
         includeCapital=False,
         multi_chars=True,
         rescale_in_preprocessing=False,
