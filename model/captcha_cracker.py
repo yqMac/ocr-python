@@ -276,7 +276,7 @@ def Run(args, num_epochs=100, multi_chars=True, num_softmaxes=None):
 
 
 class CaptchaCracker(object):
-    def __init__(self, model_params_file_prefix, includeCapital,
+    def __init__(self, model_params_file_prefix,image_shape, includeCapital=False,
                  multi_chars=True, num_softmaxes=None, rescale_in_preprocessing=False,
                  num_rnn_steps=5, use_mask_input=False, lstm_layer_units=256, cnn_dense_layer_sizes=[256],
                  lstm_grad_clipping=False, bidirec=False):
@@ -284,6 +284,7 @@ class CaptchaCracker(object):
         if type(cnn_dense_layer_sizes) == type(1):
             cnn_dense_layer_sizes = [cnn_dense_layer_sizes]
         self.captcha_model = Model(
+            image_shape=image_shape,
             # image_shape=(None, 1, args.img_height, args.img_width),
             saved_params_path=latest_model_params_file, includeCapital=includeCapital,
             multi_chars=multi_chars, num_softmaxes=num_softmaxes, num_rnn_steps=num_rnn_steps,
