@@ -26,7 +26,7 @@ for one in list_model:
     num = one.split("_")[-2]
     id_cracker = model.captcha_cracker.CaptchaCracker(
         os.getcwd()+"/lstm/" + one,
-        (None, 1,h, w),
+        (None, 1,int(h), int(w)),
         includeCapital=False,
         multi_chars=True,
         rescale_in_preprocessing=False,
