@@ -191,7 +191,7 @@ def Run(args, num_epochs=100, multi_chars=True, num_softmaxes=None):
     if not os.path.exists(base_dir+"/result"):
         os.makedirs(base_dir+"/result")
 
-    training_data_dir = base_dir+"/trian_npz"
+    training_data_dir = base_dir+"/train_npz"
     val_data_file = base_dir+"/validate_npz/validate_npy.npz"
     test_data_file = base_dir+"/test_npz/test_npy.npz"
     # multi_char = args.multichar
