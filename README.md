@@ -58,7 +58,7 @@ pip install Pillow
   
 # 生成训练集
 进入training_data_gen 目录  
-运行python training_data\_gen.py image\_dir max\_size length -case\_sensitive=False -captcha\_pattern='^\d+\_(.*)\..+$'  
+运行python training_data\_gen.py image\_dir max\_size length -case\_sensitive=False -captcha\_pattern='^\d+\_(.*)\\..+$'  
 可以根据train\_parse\_args文件查看详细含义：  
   * image\_dir为图片存储目录  
   * max\_size为多少张图片一个训练集文件  
