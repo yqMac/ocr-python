@@ -156,7 +156,7 @@ def formatNpzDir(npz_path):
 
     print "共生成{0}个训练集，其中{1}个用于训练，{2}个用于验证，{3}用于测试".format(all_count, train_count, validate_count, test_count)
     src_dir = npz_path + "/allnpz"
-    train_dir = npz_path + "/trian_npz"
+    train_dir = npz_path + "/train_npz"
     validate_dir = npz_path + "/validate_npz"
     test_dir = npz_path + "/test_npz"
     for i, file_name in enumerate(npz_list):
