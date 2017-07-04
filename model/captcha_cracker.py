@@ -249,7 +249,8 @@ def Run(args, num_epochs=100, multi_chars=True, num_softmaxes=None):
     print('Starting training')
     total_images_trained = 0
     _SaveModelAndRemoveOldOnes(captcha_model, model_params_file_prefix)
-    while (True):
+    runing = True
+    while runing:
         for i, training_file in enumerate(
                 utils.GetFilePathsUnderDir(training_data_dir, shuffle=True)):
             image_input, target_chars = TrainingData.Load(training_file, rescale_in_preprocessing=args.rescale)
@@ -266,6 +267,7 @@ def Run(args, num_epochs=100, multi_chars=True, num_softmaxes=None):
                         val_target_chars, total_images_trained, 1, eval_matrix,
                         batch_size=TEST_BATCH_SIZE, multi_chars=multi_chars,
                         use_mask_input=args.use_mask_input):
+                runing = False
                 break
             eval_matrix.update_files()
             eval_matrix = EvalMatrix(model_params_file_prefix)
