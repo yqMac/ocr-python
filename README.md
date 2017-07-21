@@ -86,7 +86,10 @@ pip install Pillow
  * 运行 python server.py  默认端口为8088
 
 ### 后台运行
-nohup Python server.py &
+nohup python captcha_cracker.py 4c39c9bc6dc511e7a5b91c1b0d56a143 40 80 4 >nohup.out 2>&1 &  
+### 查看任务  
+jobs -l
+关闭直接kill
 
 # 调用验证码识别
 http 方式 调用，参数为  
@@ -97,4 +100,5 @@ http 方式 调用，参数为
 其中site为搭建环境中自定义标示site  
 image为验证码图片的base64位编码  
 ###注意要去掉图片编码后的base64前缀调用
-
+  
+  
