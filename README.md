@@ -51,7 +51,6 @@ pip install nose
 pip install theano==0.8.2  
 pip install Lasagne==0.1  
 pip install pydot==1.1.0  
-pip install simply  
 pip install Pillow  
 
 
