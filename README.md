@@ -76,6 +76,12 @@ pip install Pillow
   * length 验证码字符数量  
   * ResultPre 生成的model的前缀，默认为lstm_  
 ### 最终结果会存储在uuid目录下得result目录下，并跟随训练进度不断更新。当训练成功率满意以后即可停止训练。
+### 后台运行
+nohup python captcha_cracker.py 4c39c9bc6dc511e7a5b91c1b0d56a143 40 80 4 >nohup.out 2>&1 &  
+### 查看任务  
+jobs -l  
+关闭直接kill  
+
 
 # 搭建识别环境
 ### rest-server
@@ -86,7 +92,10 @@ pip install Pillow
  * 运行 python server.py  默认端口为8088
 
 ### 后台运行
-nohup Python server.py &
+nohup python server.py >nohup.out 2>&1 &  
+### 查看任务  
+jobs -l
+关闭直接kill
 
 # 调用验证码识别
 http 方式 调用，参数为  
@@ -97,4 +106,5 @@ http 方式 调用，参数为
 其中site为搭建环境中自定义标示site  
 image为验证码图片的base64位编码  
 ###注意要去掉图片编码后的base64前缀调用
-
+  
+  

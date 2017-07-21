@@ -108,6 +108,9 @@ def Test(test_fn, image_input, target_chars, total_images_trained, train_flag, e
 
     print("  loss: {:.6f}".format(test_err / test_batches), "  char accuracy: {:.2f} %".format(char_acc),
           "  seq accuracy: {:.2f} %".format(seq_acc))
+    if (numpy.math.isnan(seq_acc)):
+        return False
+    return True
 
 
 def _SaveModelWithPrefix(captcha_model, prefix):
@@ -152,7 +155,7 @@ class EvalMatrix:
         parent_direc = os.path.dirname(prefix)
         # print(prefix)
         prefix = prefix.rsplit("/", 1)[1]
-        print ("save result with prefix:{0}".format(prefix))
+        print("save result with prefix:{0}".format(prefix))
 
         self.training_time = os.path.join(parent_direc, "_training_time_" + prefix + ".csv")
         self.training_loss = os.path.join(parent_direc, "_training_loss_" + prefix + ".csv")
@@ -188,14 +191,14 @@ class EvalMatrix:
 def Run(args, num_epochs=100, multi_chars=True, num_softmaxes=None):
     pre_dir = os.path.dirname(os.getcwd())
     base_dir = pre_dir + "/" + args.TrainingModeId
-    if not os.path.exists(base_dir+"/result"):
-        os.makedirs(base_dir+"/result")
+    if not os.path.exists(base_dir + "/result"):
+        os.makedirs(base_dir + "/result")
 
-    training_data_dir = base_dir+"/train_npz"
-    val_data_file = base_dir+"/validate_npz/validate_npy.npz"
-    test_data_file = base_dir+"/test_npz/test_npy.npz"
+    training_data_dir = base_dir + "/trian_npz"
+    val_data_file = base_dir + "/validate_npz/validate_npy.npz"
+    test_data_file = base_dir + "/test_npz/test_npy.npz"
     # multi_char = args.multichar
-    model_params_file_prefix = base_dir+"/result/"+args.ResultPre
+    model_params_file_prefix = base_dir + "/result/" + args.ResultPre
 
     # model_params_file_prefix = args.ModelParamsFile
     global BATCH_SIZE
@@ -246,7 +249,8 @@ def Run(args, num_epochs=100, multi_chars=True, num_softmaxes=None):
     print('Starting training')
     total_images_trained = 0
     _SaveModelAndRemoveOldOnes(captcha_model, model_params_file_prefix)
-    for epoch_num in range(num_epochs):
+    runing = True
+    while runing:
         for i, training_file in enumerate(
                 utils.GetFilePathsUnderDir(training_data_dir, shuffle=True)):
             image_input, target_chars = TrainingData.Load(training_file, rescale_in_preprocessing=args.rescale)
@@ -259,14 +263,14 @@ def Run(args, num_epochs=100, multi_chars=True, num_softmaxes=None):
                  target_chars[:TEST_BATCH_SIZE], total_images_trained, 0, eval_matrix,
                  batch_size=TEST_BATCH_SIZE, multi_chars=multi_chars,
                  use_mask_input=args.use_mask_input)
-            Test(captcha_model.GetTestFn(), val_image_input,
-                 val_target_chars, total_images_trained, 1, eval_matrix,
-                 batch_size=TEST_BATCH_SIZE, multi_chars=multi_chars,
-                 use_mask_input=args.use_mask_input)
+            if not Test(captcha_model.GetTestFn(), val_image_input,
+                        val_target_chars, total_images_trained, 1, eval_matrix,
+                        batch_size=TEST_BATCH_SIZE, multi_chars=multi_chars,
+                        use_mask_input=args.use_mask_input):
+                runing = False
+                break
             eval_matrix.update_files()
             eval_matrix = EvalMatrix(model_params_file_prefix)
-            if i != 0 and i % 10 == 0:
-                print('Processed epoch:{0} {1} training files.'.format(epoch_num + 1, i))
 
     test_image_input, test_target_chars = TrainingData.Load(
         test_data_file, rescale_in_preprocessing=args.rescale)
@@ -276,7 +280,7 @@ def Run(args, num_epochs=100, multi_chars=True, num_softmaxes=None):
 
 
 class CaptchaCracker(object):
-    def __init__(self, model_params_file_prefix,image_shape, includeCapital=False,
+    def __init__(self, model_params_file_prefix, image_shape, includeCapital=False,
                  multi_chars=True, num_softmaxes=None, rescale_in_preprocessing=False,
                  num_rnn_steps=5, use_mask_input=False, lstm_layer_units=256, cnn_dense_layer_sizes=[256],
                  lstm_grad_clipping=False, bidirec=False):
