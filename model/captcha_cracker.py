@@ -70,6 +70,9 @@ def Train(train_fn, image_input, target_chars, count_imagestrained_sofar, eval_m
     print("Training took {:.3f}s".format(training_time), "   training loss: {:.6f}".format(training_loss))
     eval_matrix.num_of_images_training_time.append((total_images_trained, training_time))
     eval_matrix.num_of_images_training_loss.append((total_images_trained, training_loss))
+    if (numpy.math.isnan(training_loss)):
+        return False
+    return True
 
 
 def Test(test_fn, image_input, target_chars, total_images_trained, train_flag, eval_matrix,
@@ -254,9 +257,11 @@ def Run(args, num_epochs=100, multi_chars=True, num_softmaxes=None):
         for i, training_file in enumerate(
                 utils.GetFilePathsUnderDir(training_data_dir, shuffle=True)):
             image_input, target_chars = TrainingData.Load(training_file, rescale_in_preprocessing=args.rescale)
-            Train(captcha_model.GetTrainFn(), image_input, target_chars,
+            if not Train(captcha_model.GetTrainFn(), image_input, target_chars,
                   total_images_trained, eval_matrix, BATCH_SIZE,
-                  use_mask_input=args.use_mask_input)
+                  use_mask_input=args.use_mask_input):
+	        runing = False
+		break
             _SaveModelAndRemoveOldOnes(captcha_model, model_params_file_prefix)
             total_images_trained += image_input.shape[0]
             Test(captcha_model.GetTestFn(), image_input[:TEST_BATCH_SIZE],
