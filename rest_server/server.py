@@ -18,6 +18,7 @@ cracker_map = {}
 
 # 加载所有训练好的模板
 for one in list_model:
+    print "start init cracker:{0}".format(one)
     if not one.endswith(".npz"):
         continue
     h = one.split("_")[-5]
