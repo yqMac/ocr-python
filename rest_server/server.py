@@ -65,34 +65,41 @@ class GetHandler(BaseHTTPRequestHandler):
             result["success"] = False
             result["msg"] = "image不能为空"
             json_string = json.dumps(result)
-            self.wfile.write(json_string)
+            self.wfile.write(json_string.encode("utf-8"))
             return
         # fix blank
         if data.has_key("site") and not cracker_map.has_key(data["site"]):
             result["success"] = False
             result["msg"] = "无匹配Site"
             json_string = json.dumps(result)
-            self.wfile.write(json_string)
+            self.wfile.write(json_string.encode("utf-8"))
             return
         if not data.has_key("site"):
             result["success"] = False
             result["msg"] = "site不能为空"
             json_string = json.dumps(result)
-            self.wfile.write(json_string)
+            self.wfile.write(json_string.encode("utf-8"))
             return
-        site = data["site"]
-        cracker = cracker_map[site]
-        imageData = data['image']
-        missing_padding = 4 - len(imageData) % 4
-        if missing_padding:
-            imageData += b'=' * missing_padding
-        imageData = base64.b64decode(imageData)
-        code  = inference.read_and_parse(imageData, cracker)
-        result["result"]= code
-        json_string = json.dumps(result)
-        self.wfile.write(json_string)
+        try:
+            site = data["site"]
+            cracker = cracker_map[site]
+            imageData = data['image']
+            missing_padding = 4 - len(imageData) % 4
+            if missing_padding:
+                imageData += b'=' * missing_padding
+            imageData = base64.b64decode(imageData)
+            code  = inference.read_and_parse(imageData, cracker)
+            result["result"]= code
+            json_string = json.dumps(result)
+            self.wfile.write(json_string.encode("utf-8"))
+            return
+        except Exception:
+            result["success"] = False
+            result["msg"] = "识别过程发生异常"
+            json_string = json.dumps(result)
+            self.wfile.write(json_string.encode("utf-8"))
+            return
 
-        return
 
 
 if __name__ == '__main__':
