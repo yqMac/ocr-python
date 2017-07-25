@@ -16,7 +16,7 @@ https://www.python.org/ftp/python/2.7.13/Python-2.7.13.tgz
 或https://www.python.org/ftp/python/2.7.13/Python-2.7.13.tar.xz  
 2、解压后进入目录Python-2.7.13；  
 3、配置并编译  
-./configure —prefix=/usr/local/  CFLAGS=-fPIC 
+./configure —prefix=/usr/local/  CFLAGS=-fPIC  
 防止zlib问题  
 yum install zlib-devel 或者 apt-get install alib1g-dev  
 进入 Python安装包,修改Module路径的setup文件    
