@@ -1,6 +1,8 @@
-# 修改后的theano验证码识别
-### 项目基于https://github.com/yqMac/Captcha-Decoder
+# 修改后的theano验证码识别   
+### 项目基于https://github.com/yqMac/Captcha-Decoder   
 ### theano及其他依赖库只能使用旧版，切记注意    
+### 该项目主要是使用了Lasagne框架，是该框架的简单实例   
+### 对该源码的详细理解可参考：http://www.jianshu.com/p/e10c3b5a278f   
 
 更新apt-get  
 apt-get update  
