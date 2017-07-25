@@ -1,3 +1,4 @@
+# coding=utf-8
 from __future__ import print_function
 
 import glob
@@ -258,10 +259,11 @@ def Run(args, num_epochs=100, multi_chars=True, num_softmaxes=None):
                 utils.GetFilePathsUnderDir(training_data_dir, shuffle=True)):
             image_input, target_chars = TrainingData.Load(training_file, rescale_in_preprocessing=args.rescale)
             if not Train(captcha_model.GetTrainFn(), image_input, target_chars,
-                  total_images_trained, eval_matrix, BATCH_SIZE,
-                  use_mask_input=args.use_mask_input):
-	        runing = False
-		break
+                         total_images_trained, eval_matrix, BATCH_SIZE,
+                         use_mask_input=args.use_mask_input):
+                # 训练出现loss为非数值的情况，停止训练
+                runing = False
+                break
             _SaveModelAndRemoveOldOnes(captcha_model, model_params_file_prefix)
             total_images_trained += image_input.shape[0]
             Test(captcha_model.GetTestFn(), image_input[:TEST_BATCH_SIZE],
