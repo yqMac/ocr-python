@@ -16,30 +16,25 @@ https://www.python.org/ftp/python/2.7.13/Python-2.7.13.tgz
 或https://www.python.org/ftp/python/2.7.13/Python-2.7.13.tar.xz  
 2、解压后进入目录Python-2.7.13；  
 3、配置并编译  
-./configure —prefix=/usr/local/  CFLAGS=-fPIC  
-make   
-make install  
-4、测试安装成功  
-输入python，能进入python环境则成功  
-
-# 安装pip  
-wget https://bootstrap.pypa.io/get-pip.py   
-python get-pip.py  
-异常：zipimport.ZipImportError: can't decompress data; zlib not available  
-解决方式:   
-依赖包  apt-get install zlib*  
+./configure —prefix=/usr/local/  CFLAGS=-fPIC 
+防止zlib问题
+yum install zlib-devel 或者 apt-get install alib1g-dev
 进入 Python安装包,修改Module路径的setup文件  
 vimmodule/setup  
 #zlibzlibmodule.c-I$(prefix)/include-L$(exec_prefix)/lib-lz  
 去掉注释   
 zlib zlibmodule.c-I$(prefix)/include-L$(exec\_prefix)/lib-lz  
-make && makeinstall  
-
-异常： Could not find a version that satisfies the requirement pip (from versions: )  
-No matching distribution found for pip  
-受够了，直接apt-get install python-pip安装了  
-然后自己给自己升级 pip  install -U pip   
+make   
+make install  
+4、测试安装成功  
+输入python，能进入python环境则成功  
+  http://www.jianshu.com/p/7d7c5cf267f4
   
+  
+# 安装pip  
+wget https://bootstrap.pypa.io/get-pip.py   
+python get-pip.py  
+
 ### 修复yum  
 export PATH=$PATH:/usr/local/lib/python2.7/dist-packages  
 pip easy_install 软连接。  
