@@ -35,9 +35,9 @@ make install
   
 # 安装pip  
 wget https://bootstrap.pypa.io/get-pip.py   
-python get-pip.py  
-
-### 修复yum  
+python get-pip.py  
+如果安装完成以后，sudo无法使用pip：sudo cp /usr/local/bin/pip  /usr/bin/pip
+### 修复yum  
 export PATH=$PATH:/usr/local/lib/python2.7/dist-packages  
 pip easy_install 软连接。  
 # 安装依赖库：  
