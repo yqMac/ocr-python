@@ -1,0 +1,17 @@
+[project]
+path=/home/tianchuang/rookie/work/pythonOcr
+
+[model_params]
+path=/data/model/
+
+[watcher_params]
+path=/data/model/
+
+[font_params]
+path=/data/fonts/
+
+[server]
+port=8088
+
+[logger]
+file=/logs/pyocr.log
