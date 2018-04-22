@@ -13,6 +13,7 @@ import torch.utils.data
 from torch.autograd import Variable
 import numpy as np
 from warpctc_pytorch import CTCLoss
+import time
 import os
 import utils
 import dataset
@@ -132,27 +133,27 @@ converter = utils.strLabelConverter(opt.alphabet)
 criterion = CTCLoss()
 
 
-
-# 加载训练和验证集的目录
-trainroot = opt.lmdbPath + "/train"
-valroot = opt.lmdbPath + "/val"
-
-train_dataset = dataset.lmdbDataset(root=trainroot)
-
-# 断言不为null，否则抛异常
-assert train_dataset
-if opt.random_sample:
-    sampler = dataset.randomSequentialSampler(train_dataset, opt.batchSize)
-else:
-    sampler = None
-train_loader = torch.utils.data.DataLoader(
-    train_dataset, batch_size=opt.batchSize,
-    shuffle=True, sampler=sampler,
-    num_workers=int(opt.workers),
-    collate_fn=dataset.alignCollate(imgH=opt.imgH, imgW=opt.imgW, keep_ratio=opt.keep_ratio))
-test_dataset = dataset.lmdbDataset(
-    root=valroot, transform=dataset.resizeNormalize((100, 32)))
-
+#
+# # 加载训练和验证集的目录
+# trainroot = opt.lmdbPath + "/train"
+# valroot = opt.lmdbPath + "/val"
+#
+# train_dataset = dataset.lmdbDataset(root=trainroot)
+#
+# # 断言不为null，否则抛异常
+# assert train_dataset
+# if opt.random_sample:
+#     sampler = dataset.randomSequentialSampler(train_dataset, opt.batchSize)
+# else:
+#     sampler = None
+# train_loader = torch.utils.data.DataLoader(
+#     train_dataset, batch_size=opt.batchSize,
+#     shuffle=True, sampler=sampler,
+#     num_workers=int(opt.workers),
+#     collate_fn=dataset.alignCollate(imgH=opt.imgH, imgW=opt.imgW, keep_ratio=opt.keep_ratio))
+# test_dataset = dataset.lmdbDataset(
+#     root=valroot, transform=dataset.resizeNormalize((100, 32)))
+#
 
 # 自定义 权重初始化 ，被crnn调用
 # custom weights initialization called on crnn
@@ -202,56 +203,66 @@ else:
     optimizer = optim.RMSprop(crnn.parameters(), lr=opt.lr)
 
 
-def val(net, dataset, criterion, max_iter=100):
-    print('Start val')
-
+def val(crnn, datasetList, criterion, max_iter=100):
+    print('开始校验准确性')
     for p in crnn.parameters():
         p.requires_grad = False
-
-    net.eval()
-    data_loader = torch.utils.data.DataLoader(
-        dataset, shuffle=True, batch_size=opt.batchSize, num_workers=int(opt.workers))
-    val_iter = iter(data_loader)
-
+    crnn.eval()
     i = 0
-    n_correct = 0
-    loss_avg = utils.averager()
+    all_Count = 0
+    correct_Count = 0
+    while i < len(datasetList):
+        datasetOne = datasetList[i]
+        data_loader = torch.utils.data.DataLoader(
+            datasetOne, shuffle=True, batch_size=opt.batchSize, num_workers=int(opt.workers))
+        val_iter = iter(data_loader)
+        one_index = 0
+        one_correct = 0
+        loss_avg = utils.averager()
 
-    max_iter = min(max_iter, len(data_loader))
-    for i in range(max_iter):
-        data = val_iter.next()
-        i += 1
-        cpu_images, cpu_texts = data
-        batch_size = cpu_images.size(0)
-        utils.loadData(image, cpu_images)
-        t, l = converter.encode(cpu_texts)
-        utils.loadData(text, t)
-        utils.loadData(length, l)
+        # 检测所用的图片数量
+        max_iter = min(max_iter, len(data_loader))
+        # 检测的总数量增加
+        all_Count += max_iter * opt.batchSize
 
-        preds = crnn(image)
-        preds_size = Variable(torch.IntTensor([preds.size(0)] * batch_size))
-        cost = criterion(preds, text, preds_size, length) / batch_size
-        loss_avg.add(cost)
+        for one_index in range(max_iter):
+            data = val_iter.next()
+            one_index += 1
+            cpu_images, cpu_texts = data
+            batch_size = cpu_images.size(0)
+            utils.loadData(image, cpu_images)
+            t, l = converter.encode(cpu_texts)
+            utils.loadData(text, t)
+            utils.loadData(length, l)
 
-        _, preds = preds.max(2, keepdim=True)
-        preds = preds.squeeze(2)
-        preds = preds.transpose(1, 0).contiguous().view(-1)
-        sim_preds = converter.decode(preds.data, preds_size.data, raw=False)
-        for pred, target in zip(sim_preds, cpu_texts):
-            if pred == target.lower():
-                n_correct += 1
+            preds = crnn(image)
+            preds_size = Variable(torch.IntTensor([preds.size(0)] * batch_size))
+            cost = criterion(preds, text, preds_size, length) / batch_size
+            loss_avg.add(cost)
+            _, preds = preds.max(2, keepdim=True)
+            preds = preds.squeeze(2)
+            preds = preds.transpose(1, 0).contiguous().view(-1)
+            sim_preds = converter.decode(preds.data, preds_size.data, raw=False)
+            for pred, target in zip(sim_preds, cpu_texts):
+                if pred == target.lower():
+                    # 两个成功数量都加1
+                    one_correct += 1
+                    correct_Count += 1
 
-    raw_preds = converter.decode(preds.data, preds_size.data, raw=True)[:opt.n_test_disp]
-    for raw_pred, pred, gt in zip(raw_preds, sim_preds, cpu_texts):
-        print('%-20s => %-20s, gt: %-20s' % (raw_pred, pred, gt))
+        raw_preds = converter.decode(preds.data, preds_size.data, raw=True)[:opt.n_test_disp]
+        for raw_pred, pred, gt in zip(raw_preds, sim_preds, cpu_texts):
+            print('%-20s => %-20s, gt: %-20s' % (raw_pred, pred, gt))
 
-    accuracy = n_correct / float(max_iter * opt.batchSize)
-    print('Test loss: %f, accuray: %f' % (loss_avg.val(), accuracy))
+        accuracy = one_correct / float(max_iter * opt.batchSize)
+        print('测试丢失率: %f,本包的成功率: %f' % (loss_avg.val(), accuracy))
+    accuracy = correct_Count / float(all_Count)
+    print('总的成功率:%f' % accuracy)
+    accuracy = accuracy * 100 / 1
+    return accuracy
 
 
 # 训练一个Batch
-def trainBatch(crnn, criterion, optimizer):
-
+def trainBatch(crnn, train_iter, criterion, optimizer):
     # 取一个Batch的数据集
     data = train_iter.next()
     # 区分图片 和 标签
@@ -281,41 +292,49 @@ def keep_only_models(n=10):
     model_files = sorted(glob(opt.experiment + '/{0}*'.format("netCRNN")))
     models_to_delete = model_files[:-n]
     for model_file in models_to_delete:
-        print(model_file)
+        print('remove other model:{}'.format(model_file))
         os.remove(model_file)
 
 
 # epochs 迭代训练多少次
 for epoch in range(opt.niter):
     # loader的指针
-    train_iter = iter(train_loader)
+    # train_iter = iter(train_loader)
     i = 0
-    # 一次迭代
-    while i < len(train_loader):
-        # 第几次迭代的第几个batch
-        print("epoch: {}, step: {}".format(epoch, i))
-        # 所有变量都要求梯度
-        for p in crnn.parameters():
-            p.requires_grad = True
+    fileIndex = 0
+    while fileIndex < len(train_loader_list):
+        # 本次要训练的模型是哪个
+        train_loader = train_loader_list[fileIndex]
+        train_iter = iter(train_loader)
+        one_train_step = 0
+        train_all_length = len(train_loader)
 
-        # 设置为训练模式
-        crnn.train()
-        # 训练一个Batch
-        cost = trainBatch(crnn, criterion, optimizer)
-        loss_avg.add(cost)
-        i += 1
+        # 本模型的训练
+        while one_train_step < len(train_loader):
+            print("epoch:{},file:{},step:{}/{}".format(epoch, fileIndex, one_train_step, train_all_length))
+            # 所有变量都要求梯度
+            for p in crnn.parameters():
+                p.requires_grad = True
+            # 设置为训练模式
+            crnn.train()
+            # 训练一个Batch
+            cost = trainBatch(crnn, train_iter, criterion, optimizer)
+            loss_avg.add(cost)
+            # 本训练文件的训练batch+1
+            one_train_step += 1
+            # 多少次batch显示一次进度
+            if (one_train_step + 1) % opt.displayInterval == 0:
+                print('[%d/%d][%d/%d][%d/%d] Loss: %f' % (
+                    epoch, opt.niter, fileIndex, len(train_loader_list), one_train_step, len(train_loader),
+                    loss_avg.val()))
+                loss_avg.reset()
 
-        if i % opt.displayInterval == 0:
-            print('[%d/%d][%d/%d] Loss: %f' %
-                  (epoch, opt.niter, i, len(train_loader), loss_avg.val()))
-            loss_avg.reset()
-
-        # do checkpointing
-        if i % opt.saveInterval == 0:
-            val(crnn, test_dataset, criterion)
-            # print("save model: {0}/netCRNN_{1}_{2}.pth".format(opt.experiment, epoch, i))
-            print("save model: {0}/netCRNN.pth".format(opt.experiment))
-            # torch.save(crnn.state_dict(), '{0}/netCRNN_{1}_{2}.pth'.format(opt.experiment, epoch, i))
-            torch.save(crnn.state_dict(), '{0}/netCRNN.pth'.format(opt.experiment))
-            keep_only_models()
-
+            # 检查点:检查成功率,存储model，
+            if (one_train_step + 1) % opt.saveInterval == 0:
+                certVal = val(crnn, val_dataset_list, criterion)
+                time_format = time.strftime('%Y%m%d_%H%M%S')
+                # print("save model: {0}/netCRNN_{1}_{2}.pth".format(opt.experiment, epoch, i))
+                print("save model: {0}/netCRNN_{}_{}.pth".format(opt.experiment, time_format, certVal))
+                # torch.save(crnn.state_dict(), '{0}/netCRNN_{1}_{2}.pth'.format(opt.experiment, epoch, i))
+                torch.save(crnn.state_dict(), '{0}/netCRNN_{}_{}.pth'.format(opt.experiment, time_format, certVal))
+                keep_only_models()
