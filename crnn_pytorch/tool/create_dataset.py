@@ -1,10 +1,18 @@
+import argparse
 import os
+import re
+from glob import glob
+import random
 
 import cv2
 import lmdb  # install lmdb by "pip install lmdb"
 import numpy as np
-import re
-from glob import glob
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--imagePath', required=True, help='path to image')
+parser.add_argument('--lmdbPath', required=True, help='path to lmdb')
+opt = parser.parse_args()
+print(opt)
 
 
 def checkImageIsValid(imageBin):
@@ -24,53 +32,75 @@ def writeCache(env, cache):
             txn.put(k, v)
 
 
-def createDataset(outputPath, imagePathList, lexiconList=None, checkValid=True):
+def createDataset(outputPath, imagePathList, checkValid=True):
     """
     Create LMDB dataset for CRNN training.
+    split the imagesList to ten parts, nine for train, one for val
     ARGS:
         outputPath    : LMDB output path
         imagePathList : list of image path
         labelList     : list of corresponding groundtruth texts
-        lexiconList   : (optional) list of lexicon lists
         checkValid    : if true, check the validity of every image
     """
     # assert (len(imagePathList) == len(labelList))
     nSamples = len(imagePathList)
-    env = lmdb.open(outputPath, map_size=1099511627776)
+    print(nSamples)
+    train_size = int(round(round(nSamples / 10000.0, 1) * 9, 0) * 1000)
+    print(train_size)
+    val_size = nSamples - train_size
+    print(val_size)
+    train_lmdb_path = outputPath + "/train"
+    val_lmdb_path = outputPath + "/val"
+    env_train = lmdb.open(train_lmdb_path, map_size=1099511627776)
+    env_val = lmdb.open(val_lmdb_path, map_size=1099511627776)
     cache = {}
     cnt = 1
     for i in range(nSamples):
         imagePath = imagePathList[i]
-        match = re.compile("^\d+_(.*)\..+$").match(imagePath.split("/")[-1])
-        label = match.group(1)
-        if not os.path.exists(imagePath):
-            print('%s does not exist' % imagePath)
-            continue
-        with open(imagePath, 'r') as f:
-            imageBin = f.read()
-        if checkValid:
-            if not checkImageIsValid(imageBin):
-                print('%s is not a valid image' % imagePath)
+        try:
+            match = re.compile("^.*_(.*)\..+$").match(imagePath.split("/")[-1])
+            #match = re.compile("^(.*)\..+$").match(imagePath.split("/")[-1])
+            label = match.group(1)
+            if not os.path.exists(imagePath):
+                print('%s does not exist' % imagePath)
                 continue
+            with open(imagePath, 'r') as f:
+                imageBin = f.read()
+            if checkValid:
+                if not checkImageIsValid(imageBin):
+                    print('%s is not a valid image' % imagePath)
+                    continue
 
-        imageKey = 'image-%09d' % cnt
-        labelKey = 'label-%09d' % cnt
-        cache[imageKey] = imageBin
-        cache[labelKey] = label
-        if lexiconList:
-            lexiconKey = 'lexicon-%09d' % cnt
-            cache[lexiconKey] = ' '.join(lexiconList[i])
-        if cnt % 1000 == 0:
-            writeCache(env, cache)
-            cache = {}
-            print('Written %d / %d' % (cnt, nSamples))
-        cnt += 1
-    nSamples = cnt - 1
-    cache['num-samples'] = str(nSamples)
-    writeCache(env, cache)
-    print('Created dataset with %d samples' % nSamples)
+            imageKey = 'image-%09d' % cnt
+            labelKey = 'label-%09d' % cnt
+            cache[imageKey] = imageBin
+            cache[labelKey] = label
+            if (i + 1) % 1000 == 0:
+                if (i + 1) <= train_size:
+                    writeCache(env_train, cache)
+                    print('Written train %d / %d' % (cnt, train_size))
+                    cache = {}
+                    if cnt == train_size:
+                        cnt = 0
+                else:
+                    writeCache(env_val, cache)
+                    print('Written val %d / %d' % (cnt, val_size))
+                    cache = {}
+            cnt += 1
+        except Exception,e:
+            print("the image {0} is error{1}".format(imagePath,e.message))
+    cache['num-samples'] = str(val_size)
+    writeCache(env_val, cache)
+    print('Created val dataset with %d samples' % val_size)
+    cache.clear()
+    cache['num-samples'] = str(train_size)
+    writeCache(env_train, cache)
+    print('Created train dataset with %d samples' % train_size)
 
 
 if __name__ == '__main__':
-    paths = glob('/Users/yp-tc-m-2677/tmp/hitZhiFuBao/val/*.*')
-    createDataset("../data/lmdb/val", paths)
+    paths = glob(opt.imagePath + "/*.*")
+    print("split the imagePathList to ten parts, nine for train, one for val")
+    random.shuffle(paths)
+    createDataset(opt.lmdbPath, paths)
+
