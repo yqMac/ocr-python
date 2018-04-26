@@ -130,11 +130,9 @@ def initValDataSets():
         val_loader_list.append(one_loader)
 
 
-
 initTrainDataSets()
 
 initValDataSets()
-
 
 # 字符集长度
 nclass = len(opt.alphabet) + 1
@@ -230,20 +228,19 @@ def val(crnn, loaderList, criterion, max_iter=100):
         # data_loader = torch.utils.data.DataLoader(
         #     datasetOne, shuffle=True, batch_size=opt.batchSize, num_workers=int(opt.workers))
         data_loader = loaderList[i]
+        print("val file process :{}/{}".format(i,len(loaderList)))
+
+        i += 1
         val_iter = iter(data_loader)
         one_index = 0
         one_correct = 0
         loss_avg = utils.averager()
-
-        print("len(data_loader):{}".format(len(data_loader)))
-
         # 检测所用的图片数量
         max_iter = min(max_iter, len(data_loader))
         # 检测的总数量增加
         all_Count += max_iter * opt.batchSize
 
         for one_index in range(max_iter):
-            print("val one_index :{}/{}".format(one_index, max_iter))
 
             data = val_iter.next()
             one_index += 1
