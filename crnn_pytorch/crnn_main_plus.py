@@ -40,7 +40,7 @@ parser.add_argument('--experiment', default=None, help='Where to store samples a
 parser.add_argument('--displayInterval', type=int, default=100, help='Interval to be displayed')
 parser.add_argument('--n_test_disp', type=int, default=10, help='Number of samples to display when test')
 parser.add_argument('--valInterval', type=int, default=100, help='Interval to be displayed')
-parser.add_argument('--saveInterval', type=int, default=100, help='Interval to be displayed')
+parser.add_argument('--saveInterval', type=int, default=200, help='Interval to be displayed')
 parser.add_argument('--adam', action='store_true', help='Whether to use adam (default is rmsprop)')
 parser.add_argument('--adadelta', action='store_true', default=True,
                     help='Whether to use adadelta (default is rmsprop)')
@@ -325,7 +325,7 @@ def trainBatch(crnn, train_iter, criterion, optimizer):
     return cost
 
 
-def keep_only_models(n=10):
+def keep_only_models(n=30):
     model_files = sorted(glob(opt.experiment + '/{0}*'.format("netCRNN")))
     models_to_delete = model_files[:-n]
     for model_file in models_to_delete:
@@ -368,7 +368,7 @@ for epoch in range(opt.niter):
                 loss_avg.reset()
 
             # 检查点:检查成功率,存储model，
-            if (one_train_step + 1) % opt.saveInterval == 0:
+            if (one_train_step + 1) % opt.saveInterval == 0 or one_train_step == len(train_loader):
                 certVal = val(crnn, val_loader_list, criterion)
                 time_format = time.strftime('%Y%m%d_%H%M%S')
                 # print("save model: {0}/netCRNN_{1}_{2}.pth".format(opt.experiment, epoch, i))
