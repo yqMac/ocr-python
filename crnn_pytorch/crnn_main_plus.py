@@ -125,6 +125,8 @@ def initValDataSets():
         #     collate_fn=dataset.alignCollate(imgH=opt.imgH, imgW=opt.imgW, keep_ratio=opt.keep_ratio))
         val_dataset_list.append(one_dataset)
         # train_loader_list.append(one_loader)
+        one_loader = torch.utils.data.DataLoader(one_dataset, shuffle=True, batch_size=opt.batchSize, num_workers=int(opt.workers))
+        val_loader_list.append(one_loader)
 
 
 initTrainDataSets()
@@ -211,7 +213,7 @@ else:
     optimizer = optim.RMSprop(crnn.parameters(), lr=opt.lr)
 
 
-def val(crnn, datasetList, criterion, max_iter=100):
+def val(crnn, loaderList, criterion, max_iter=100):
     print('开始校验准确性')
     for p in crnn.parameters():
         p.requires_grad = False
@@ -219,10 +221,11 @@ def val(crnn, datasetList, criterion, max_iter=100):
     i = 0
     all_Count = 0
     correct_Count = 0
-    while i < len(datasetList):
-        datasetOne = datasetList[i]
-        data_loader = torch.utils.data.DataLoader(
-            datasetOne, shuffle=True, batch_size=opt.batchSize, num_workers=int(opt.workers))
+    while i < len(loaderList):
+        # datasetOne = datasetList[i]
+        # data_loader = torch.utils.data.DataLoader(
+        #     datasetOne, shuffle=True, batch_size=opt.batchSize, num_workers=int(opt.workers))
+        data_loader= loaderList[i]
         val_iter = iter(data_loader)
         one_index = 0
         one_correct = 0
@@ -343,7 +346,7 @@ for epoch in range(opt.niter):
 
             # 检查点:检查成功率,存储model，
             if (one_train_step + 1) % opt.saveInterval == 0:
-                certVal = val(crnn, val_dataset_list, criterion)
+                certVal = val(crnn, val_loader_list, criterion)
                 time_format = time.strftime('%Y%m%d_%H%M%S')
                 # print("save model: {0}/netCRNN_{1}_{2}.pth".format(opt.experiment, epoch, i))
                 print("save model: {0}/netCRNN_{}_{}.pth".format(opt.experiment, time_format, certVal))
