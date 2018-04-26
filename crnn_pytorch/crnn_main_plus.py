@@ -22,7 +22,7 @@ from glob import glob
 import models.crnn as crnn
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--lmdbPath', required=True, help='path to lmdb dataset')
+parser.add_argument('--lmdbPath', required=False, help='path to lmdb dataset')
 # parser.add_argument('--valroot', required=True, help='path to dataset')
 parser.add_argument('--workers', type=int, help='number of data loading workers', default=2)
 parser.add_argument('--batchSize', type=int, default=64, help='input batch size')
@@ -75,17 +75,21 @@ val_dataset_list = []
 # 验证的加载器
 val_loader_list = []
 
-dataset_dir = 'datasets'
+dataset_dir = opt.lmdbPath
+if dataset_dir is None:
+    file_path = os.path.dirname(os.path.realpath(__file__))
+    dataset_dir = file_path + '/datasets'
 
 
 # 初始化加载 训练数据集
 def initTrainDataSets():
-    trains_dir = dataset_dir + "/trains"
+    trains_dir = dataset_dir
     fs = os.listdir(trains_dir)
     for one in fs:
-        if not one.endswith(".mdb"):
-            continue
-        one_dataset = dataset.lmdbDataset(root=one)
+        # if not one.endswith(".mdb"):
+        #     continue
+        root_path = trains_dir + "/" + one + "/train"
+        one_dataset = dataset.lmdbDataset(root=root_path)
         assert one_dataset
         if opt.random_sample:
             sampler = dataset.randomSequentialSampler(one_dataset, opt.batchSize)
@@ -102,12 +106,11 @@ def initTrainDataSets():
 
 # 初始化加载 验证数据集
 def initValDataSets():
-    vals_dir = dataset_dir + "/vals"
-    fs = os.listdir(vals_dir)
+
+    fs = os.listdir(dataset_dir)
     for one in fs:
-        if not one.endswith(".mdb"):
-            continue
-        one_dataset = dataset.lmdbDataset(root=one)
+        root_path = dataset_dir + "/" + one + "/val"
+        one_dataset = dataset.lmdbDataset(root=root_path)
         # assert one_dataset
         # if opt.random_sample:
         #     sampler = dataset.randomSequentialSampler(one_dataset, opt.batchSize)
@@ -122,6 +125,9 @@ def initValDataSets():
         # train_loader_list.append(one_loader)
 
 
+initTrainDataSets()
+
+initValDataSets()
 # 字符集长度
 nclass = len(opt.alphabet) + 1
 
