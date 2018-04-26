@@ -188,6 +188,7 @@ if crnnPath is None or crnnPath == '':
     crnnPath = file_path + '/expr'
 if crnnPath is not None:
     pths = os.listdir(crnnPath)
+    # 因为最后一个文件有存储不完整的可能性,所以尽量以倒数第二个文件作为起始点，除非你每次存储的差距很大。
     pre_file = 1
     if len(pths) > 1:
         pre_file = 2
