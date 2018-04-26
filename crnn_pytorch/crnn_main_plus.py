@@ -189,8 +189,9 @@ if crnnPath is None or crnnPath == '':
 if crnnPath is not None:
     pths = os.listdir(crnnPath)
     if len(pths) > 0:
-        if pths[0].endswith(".pth"):
-            continue_path = crnnPath + "/" + pths[0]
+        pths.sort()
+        if pths[len(pths)-1].endswith(".pth"):
+            continue_path = crnnPath + "/" + pths[len(pths)-1]
             print("从上次文件继续训练:{}".format(continue_path))
             crnn = torch.nn.DataParallel(crnn)
             crnn.load_state_dict(torch.load(continue_path))
