@@ -273,7 +273,6 @@ def val(crnn, loaderList, criterion, max_iter=100):
         print('测试丢失率: %f,本包的成功率: %f' % (loss_avg.val(), accuracy))
     accuracy = correct_Count / float(all_Count)
     print('总的成功率:%f' % accuracy)
-    accuracy = accuracy * 100 / 1
     return accuracy
 
 
@@ -351,7 +350,8 @@ for epoch in range(opt.niter):
                 certVal = val(crnn, val_loader_list, criterion)
                 time_format = time.strftime('%Y%m%d_%H%M%S')
                 # print("save model: {0}/netCRNN_{1}_{2}.pth".format(opt.experiment, epoch, i))
-                print("save model: {0}/netCRNN_{1}_{2}.pth".format(opt.experiment, time_format, certVal))
+                print("save model: {0}/netCRNN_{1}_{2}.pth".format(opt.experiment, time_format, int(certVal * 100)))
                 # torch.save(crnn.state_dict(), '{0}/netCRNN_{1}_{2}.pth'.format(opt.experiment, epoch, i))
-                torch.save(crnn.state_dict(), '{0}/netCRNN_{1}_{2}.pth'.format(opt.experiment, time_format, certVal))
+                torch.save(crnn.state_dict(),
+                           '{0}/netCRNN_{1}_{2}.pth'.format(opt.experiment, time_format, int(certVal * 100)))
                 keep_only_models()
