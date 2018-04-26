@@ -128,15 +128,13 @@ def initValDataSets():
         one_loader = torch.utils.data.DataLoader(one_dataset, shuffle=True, batch_size=opt.batchSize,
                                                  num_workers=int(opt.workers))
         val_loader_list.append(one_loader)
-        val_iter = iter(one_loader)
-        data = val_iter.next()
-        print(data)
+
 
 
 initTrainDataSets()
 
 initValDataSets()
-os._exit(0)
+
 
 # 字符集长度
 nclass = len(opt.alphabet) + 1
