@@ -112,7 +112,7 @@ def initValDataSets():
     for one in fs:
         root_path = dataset_dir + "/" + one + "/val"
         print("添加校验数据集:{}".format(root_path))
-        one_dataset = dataset.lmdbDataset(root=root_path)
+        one_dataset = dataset.lmdbDataset(root=root_path, transform=dataset.resizeNormalize((100, 32)))
         # assert one_dataset
         # if opt.random_sample:
         #     sampler = dataset.randomSequentialSampler(one_dataset, opt.batchSize)
@@ -125,13 +125,19 @@ def initValDataSets():
         #     collate_fn=dataset.alignCollate(imgH=opt.imgH, imgW=opt.imgW, keep_ratio=opt.keep_ratio))
         val_dataset_list.append(one_dataset)
         # train_loader_list.append(one_loader)
-        one_loader = torch.utils.data.DataLoader(one_dataset, shuffle=True, batch_size=opt.batchSize, num_workers=int(opt.workers))
+        one_loader = torch.utils.data.DataLoader(one_dataset, shuffle=True, batch_size=opt.batchSize,
+                                                 num_workers=int(opt.workers))
         val_loader_list.append(one_loader)
+        val_iter = iter(one_loader)
+        data = val_iter.next()
+        print(data)
 
 
 initTrainDataSets()
 
 initValDataSets()
+os._exit(0)
+
 # 字符集长度
 nclass = len(opt.alphabet) + 1
 
@@ -225,7 +231,7 @@ def val(crnn, loaderList, criterion, max_iter=100):
         # datasetOne = datasetList[i]
         # data_loader = torch.utils.data.DataLoader(
         #     datasetOne, shuffle=True, batch_size=opt.batchSize, num_workers=int(opt.workers))
-        data_loader= loaderList[i]
+        data_loader = loaderList[i]
         val_iter = iter(data_loader)
         one_index = 0
         one_correct = 0
@@ -239,7 +245,7 @@ def val(crnn, loaderList, criterion, max_iter=100):
         all_Count += max_iter * opt.batchSize
 
         for one_index in range(max_iter):
-            print("val one_index :{}/{}".format(one_index,max_iter))
+            print("val one_index :{}/{}".format(one_index, max_iter))
 
             data = val_iter.next()
             one_index += 1
