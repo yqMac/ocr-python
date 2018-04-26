@@ -89,6 +89,8 @@ def initTrainDataSets():
         # if not one.endswith(".mdb"):
         #     continue
         root_path = trains_dir + "/" + one + "/train"
+        print("添加训练数据集:{}".format(root_path))
+
         one_dataset = dataset.lmdbDataset(root=root_path)
         assert one_dataset
         if opt.random_sample:
@@ -106,10 +108,10 @@ def initTrainDataSets():
 
 # 初始化加载 验证数据集
 def initValDataSets():
-
     fs = os.listdir(dataset_dir)
     for one in fs:
         root_path = dataset_dir + "/" + one + "/val"
+        print("添加校验数据集:{}".format(root_path))
         one_dataset = dataset.lmdbDataset(root=root_path)
         # assert one_dataset
         # if opt.random_sample:
