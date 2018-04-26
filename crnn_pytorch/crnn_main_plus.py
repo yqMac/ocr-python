@@ -228,7 +228,7 @@ def val(crnn, loaderList, criterion, max_iter=100):
         # data_loader = torch.utils.data.DataLoader(
         #     datasetOne, shuffle=True, batch_size=opt.batchSize, num_workers=int(opt.workers))
         data_loader = loaderList[i]
-        print("val file process :{}/{}".format(i,len(loaderList)))
+        print("val file process :{}/{}".format(i, len(loaderList)))
 
         i += 1
         val_iter = iter(data_loader)
@@ -321,13 +321,14 @@ for epoch in range(opt.niter):
     while fileIndex < len(train_loader_list):
         # 本次要训练的模型是哪个
         train_loader = train_loader_list[fileIndex]
+        print("epoch:{},file:{}/{}".format(epoch, fileIndex, len(train_loader_list)))
+        fileIndex += 1
         train_iter = iter(train_loader)
         one_train_step = 0
         train_all_length = len(train_loader)
 
         # 本模型的训练
         while one_train_step < len(train_loader):
-            print("epoch:{},file:{},step:{}/{}".format(epoch, fileIndex, one_train_step, train_all_length))
             # 所有变量都要求梯度
             for p in crnn.parameters():
                 p.requires_grad = True
