@@ -228,6 +228,8 @@ def val(crnn, datasetList, criterion, max_iter=100):
         one_correct = 0
         loss_avg = utils.averager()
 
+        print("len(data_loader):{}".format(len(data_loader)))
+
         # 检测所用的图片数量
         max_iter = min(max_iter, len(data_loader))
         # 检测的总数量增加
