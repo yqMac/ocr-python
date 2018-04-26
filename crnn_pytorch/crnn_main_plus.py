@@ -54,6 +54,9 @@ if opt.experiment is None:
     opt.experiment = 'expr'
 os.system('mkdir {0}'.format(opt.experiment))
 
+file_path = os.path.dirname(os.path.realpath(__file__))
+
+
 opt.manualSeed = random.randint(1, 10000)  # fix seed
 print("Random Seed: ", opt.manualSeed)
 random.seed(opt.manualSeed)
@@ -77,7 +80,6 @@ val_loader_list = []
 
 dataset_dir = opt.lmdbPath
 if dataset_dir is None:
-    file_path = os.path.dirname(os.path.realpath(__file__))
     dataset_dir = file_path + '/datasets'
 
 
@@ -180,10 +182,26 @@ def weights_init(m):
 
 crnn = crnn.CRNN(opt.imgH, nc, nclass, opt.nh)
 crnn.apply(weights_init)
-if opt.crnn != '':
-    print('loading pretrained model from %s' % opt.crnn)
-    crnn = torch.nn.DataParallel(crnn)
-    crnn.load_state_dict(torch.load(opt.crnn))
+
+
+# 继续训练
+crnnPath = opt.crnn
+if crnnPath is None:
+    crnnPath = file_path + '/expr'
+if crnnPath is not None:
+    pths = os.listdir(crnnPath)
+    if len(pths)>0:
+        if pths[-1].endswith(".pth"):
+            print("从上次文件继续训练:{}".format(pths[:-1]))
+            crnn = torch.nn.DataParallel(crnn)
+            crnn.load_state_dict(torch.load(pths[:-1]))
+        else:
+            print("你这不符合格式啊:{}".format(pths[:-1]))
+
+# if opt.crnn != '':
+#     print('loading pretrained model from %s' % opt.crnn)
+#     crnn = torch.nn.DataParallel(crnn)
+#     crnn.load_state_dict(torch.load(opt.crnn))
 print(crnn)
 
 # 三个张量 分别存储 图片数据、字符串、字符数
