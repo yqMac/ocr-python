@@ -236,6 +236,8 @@ def val(crnn, datasetList, criterion, max_iter=100):
         all_Count += max_iter * opt.batchSize
 
         for one_index in range(max_iter):
+            print("val one_index :{}/{}".format(one_index,max_iter))
+
             data = val_iter.next()
             one_index += 1
             cpu_images, cpu_texts = data
