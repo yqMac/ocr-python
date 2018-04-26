@@ -10,7 +10,8 @@ import numpy as np
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--imagePath', required=True, help='path to image')
-parser.add_argument('--lmdbPath', required=True, help='path to lmdb')
+parser.add_argument('--lmdbPath', required=False, help='path to lmdb')
+parser.add_argument('--outputHead', required=True, help='file name pre to save')
 opt = parser.parse_args()
 print(opt)
 
@@ -32,7 +33,7 @@ def writeCache(env, cache):
             txn.put(k, v)
 
 
-def createDataset(outputPath, imagePathList, checkValid=True):
+def createDataset(outputPath, imagePathList, outputHead, checkValid=True):
     """
     Create LMDB dataset for CRNN training.
     split the imagesList to ten parts, nine for train, one for val
@@ -49,8 +50,18 @@ def createDataset(outputPath, imagePathList, checkValid=True):
     print(train_size)
     val_size = nSamples - train_size
     print(val_size)
-    train_lmdb_path = outputPath + "/train"
-    val_lmdb_path = outputPath + "/val"
+    if outputPath is None or outputPath == "":
+        file_path = os.path.dirname(os.path.realpath(__file__))
+        crnn_path = os.path.dirname(file_path)
+        datasets_path = crnn_path + '/datasets'
+        outputPath = datasets_path
+    train_lmdb_path = outputPath + "/" + outputHead + "/train"
+    val_lmdb_path = outputPath + "/" + outputHead + "/val"
+    if not os.path.exists(train_lmdb_path):
+        os.makedirs(train_lmdb_path)
+    if not os.path.exists(val_lmdb_path):
+        os.makedirs(val_lmdb_path)
+
     env_train = lmdb.open(train_lmdb_path, map_size=1099511627776)
     env_val = lmdb.open(val_lmdb_path, map_size=1099511627776)
     cache = {}
@@ -59,7 +70,7 @@ def createDataset(outputPath, imagePathList, checkValid=True):
         imagePath = imagePathList[i]
         try:
             match = re.compile("^.*_(.*)\..+$").match(imagePath.split("/")[-1])
-            #match = re.compile("^(.*)\..+$").match(imagePath.split("/")[-1])
+            # match = re.compile("^(.*)\..+$").match(imagePath.split("/")[-1])
             label = match.group(1)
             if not os.path.exists(imagePath):
                 print('%s does not exist' % imagePath)
@@ -87,8 +98,8 @@ def createDataset(outputPath, imagePathList, checkValid=True):
                     print('Written val %d / %d' % (cnt, val_size))
                     cache = {}
             cnt += 1
-        except Exception,e:
-            print("the image {0} is error{1}".format(imagePath,e.message))
+        except Exception as e:
+            print("the image {0} is error{1}".format(imagePath, e.message))
     cache['num-samples'] = str(val_size)
     writeCache(env_val, cache)
     print('Created val dataset with %d samples' % val_size)
@@ -102,5 +113,4 @@ if __name__ == '__main__':
     paths = glob(opt.imagePath + "/*.*")
     print("split the imagePathList to ten parts, nine for train, one for val")
     random.shuffle(paths)
-    createDataset(opt.lmdbPath, paths)
-
+    createDataset(opt.lmdbPath, paths, opt.outputHead)
