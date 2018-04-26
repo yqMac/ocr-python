@@ -56,7 +56,6 @@ os.system('mkdir {0}'.format(opt.experiment))
 
 file_path = os.path.dirname(os.path.realpath(__file__))
 
-
 opt.manualSeed = random.randint(1, 10000)  # fix seed
 print("Random Seed: ", opt.manualSeed)
 random.seed(opt.manualSeed)
@@ -183,14 +182,13 @@ def weights_init(m):
 crnn = crnn.CRNN(opt.imgH, nc, nclass, opt.nh)
 crnn.apply(weights_init)
 
-
 # 继续训练
 crnnPath = opt.crnn
-if crnnPath is None:
+if crnnPath is None or crnnPath == '':
     crnnPath = file_path + '/expr'
 if crnnPath is not None:
     pths = os.listdir(crnnPath)
-    if len(pths)>0:
+    if len(pths) > 0:
         if pths[-1].endswith(".pth"):
             print("从上次文件继续训练:{}".format(pths[:-1]))
             crnn = torch.nn.DataParallel(crnn)
