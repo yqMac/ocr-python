@@ -190,11 +190,11 @@ if crnnPath is not None:
     pths = os.listdir(crnnPath)
     if len(pths) > 0:
         if pths[-1].endswith(".pth"):
-            print("从上次文件继续训练:{}".format(pths[:-1]))
+            print("从上次文件继续训练:{}".format(pths[len(pths) - 1]))
             crnn = torch.nn.DataParallel(crnn)
-            crnn.load_state_dict(torch.load(pths[:-1]))
+            crnn.load_state_dict(torch.load(pths[len(pths) - 1]))
         else:
-            print("你这不符合格式啊:{}".format(pths[:-1]))
+            print("你这不符合格式啊:{}".format(pths[len(pths) - 1]))
 
 # if opt.crnn != '':
 #     print('loading pretrained model from %s' % opt.crnn)
