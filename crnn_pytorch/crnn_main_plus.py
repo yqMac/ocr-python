@@ -368,6 +368,8 @@ for epoch in range(opt.niter):
         # 本次要训练的模型是哪个
         fileIndex %= len(train_data_list)
         train_data = train_data_list[fileIndex]
+        fileIndex += 1
+
         train_loader = train_data['loader']
         # 初始化一个iter
         train_iter = None
