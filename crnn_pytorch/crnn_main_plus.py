@@ -86,6 +86,8 @@ def initTrainDataSets():
         # if not one.endswith(".mdb"):
         #     continue
         root_path = trains_dir + "/" + one + "/train"
+        if not os.path.exists(root_path):
+            continue
         print("添加训练数据集:{}".format(root_path))
 
         one_dataset = dataset.lmdbDataset(root=root_path)
@@ -116,6 +118,8 @@ def initValDataSets():
     index = 0
     for one in fs:
         root_path = dataset_dir + "/" + one + "/val"
+        if not os.path.exists(root_path):
+            continue
         print("添加校验数据集:{}".format(root_path))
         one_dataset = dataset.lmdbDataset(root=root_path, transform=dataset.resizeNormalize((100, 32)))
 
