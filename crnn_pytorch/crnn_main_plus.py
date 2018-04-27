@@ -357,13 +357,14 @@ for x in range(len(train_data_list)):
     if max_train_data_lenght < len(train_loader):
         max_train_data_lenght = len(train_loader)
 
+max_train_data_lenght *= len(train_data_list)
 # epochs 迭代训练多少次
 for epoch in range(opt.niter):
     # 步数
     step = 0
     # 文件索引
     fileIndex = 0
-    # 一个迭代 训练最长文件的步数
+    # 一个迭代 训练最长文件的步数 * 文件数
     while step < max_train_data_lenght:
         # 本次要训练的模型是哪个
         fileIndex %= len(train_data_list)
@@ -373,7 +374,8 @@ for epoch in range(opt.niter):
         train_loader = train_data['loader']
         # 初始化一个iter
         train_iter = None
-        if step % len(train_loader) == 0:
+        one_step = step / len(train_data_list)
+        if one_step % len(train_loader) == 0:
             # 重置当前iter
             train_iter = iter(train_loader)
             train_data['iter'] = train_iter
@@ -391,13 +393,14 @@ for epoch in range(opt.niter):
         loss_avg.add(cost)
 
         # 多少次batch显示一次进度
-        if step % opt.displayInterval == 0:
-            print('[%d/%d][%d/%d][%s] Loss: %f' % (
-                epoch, opt.niter, step, max_train_data_lenght, train_data['dir'], loss_avg.val()))
+        if one_step % opt.displayInterval == 0:
+            print('epoch: [%d/%d],step: [%d/%d], [%s] Loss: %f' % (
+                epoch, opt.niter, one_step, max_train_data_lenght / len(train_data_list), train_data['dir'],
+                loss_avg.val()))
             loss_avg.reset()
 
         # 检查点:检查成功率,存储model，
-        if step % opt.saveInterval == 0:
+        if one_step % opt.saveInterval == 0:
             certVal = val(crnn, val_data_list, criterion)
             time_format = time.strftime('%Y%m%d_%H%M%S')
             print("save model: {0}/netCRNN_{1}_{2}.pth".format(opt.experiment, time_format, int(certVal * 100)))
