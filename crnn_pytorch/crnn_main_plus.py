@@ -52,6 +52,7 @@ print(opt)
 # 训练结果存储目录
 if opt.experiment is None:
     opt.experiment = 'expr'
+
 os.system('mkdir {0}'.format(opt.experiment))
 
 file_path = os.path.dirname(os.path.realpath(__file__))
@@ -82,13 +83,14 @@ def initTrainDataSets():
     trains_dir = dataset_dir
     fs = os.listdir(trains_dir)
     index = 0
+    list_name = []
     for one in fs:
         # if not one.endswith(".mdb"):
         #     continue
         root_path = trains_dir + "/" + one + "/train"
         if not os.path.exists(root_path):
             continue
-        print("添加训练数据集:{}".format(root_path))
+        # print("添加训练数据集:{}".format(root_path))
 
         one_dataset = dataset.lmdbDataset(root=root_path)
         assert one_dataset
@@ -110,17 +112,21 @@ def initTrainDataSets():
         }
         index += 1
         train_data_list.append(train_data)
+        list_name.append(one)
+    print("加载了{}个训练集:{}".format(len(list_name), list_name))
 
 
 # 初始化加载 验证数据集
 def initValDataSets():
     fs = os.listdir(dataset_dir)
     index = 0
+    list_name = []
+
     for one in fs:
         root_path = dataset_dir + "/" + one + "/val"
         if not os.path.exists(root_path):
             continue
-        print("添加校验数据集:{}".format(root_path))
+        # print("添加校验数据集:{}".format(root_path))
         one_dataset = dataset.lmdbDataset(root=root_path, transform=dataset.resizeNormalize((100, 32)))
 
         one_loader = torch.utils.data.DataLoader(one_dataset, shuffle=True, batch_size=opt.batchSize,
@@ -133,6 +139,8 @@ def initValDataSets():
         }
         index += 1
         val_data_list.append(val_data)
+        list_name.append(one)
+    print("加载了{}个验证集:{}".format(len(list_name), list_name))
 
 
 initTrainDataSets()
@@ -148,29 +156,6 @@ nc = 1
 converter = utils.strLabelConverter(opt.alphabet)
 # CTCLoss
 criterion = CTCLoss()
-
-
-#
-# # 加载训练和验证集的目录
-# trainroot = opt.lmdbPath + "/train"
-# valroot = opt.lmdbPath + "/val"
-#
-# train_dataset = dataset.lmdbDataset(root=trainroot)
-#
-# # 断言不为null，否则抛异常
-# assert train_dataset
-# if opt.random_sample:
-#     sampler = dataset.randomSequentialSampler(train_dataset, opt.batchSize)
-# else:
-#     sampler = None
-# train_loader = torch.utils.data.DataLoader(
-#     train_dataset, batch_size=opt.batchSize,
-#     shuffle=True, sampler=sampler,
-#     num_workers=int(opt.workers),
-#     collate_fn=dataset.alignCollate(imgH=opt.imgH, imgW=opt.imgW, keep_ratio=opt.keep_ratio))
-# test_dataset = dataset.lmdbDataset(
-#     root=valroot, transform=dataset.resizeNormalize((100, 32)))
-#
 
 # 自定义 权重初始化 ，被crnn调用
 # custom weights initialization called on crnn
@@ -219,7 +204,7 @@ if crnnPath is not None:
 #     print('loading pretrained model from %s' % opt.crnn)
 #     crnn = torch.nn.DataParallel(crnn)
 #     crnn.load_state_dict(torch.load(opt.crnn))
-print(crnn)
+# print(crnn)
 
 # 三个张量 分别存储 图片数据、字符串、字符数
 image = torch.FloatTensor(opt.batchSize, 3, opt.imgH, opt.imgH)
