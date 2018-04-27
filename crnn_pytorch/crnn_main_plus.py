@@ -236,7 +236,7 @@ else:
 
 
 def val(crnn, val_data_list_param, criterion, max_iter=100):
-    print('开始校验准确性')
+    # print('开始校验准确性')
     for p in crnn.parameters():
         p.requires_grad = False
     crnn.eval()
@@ -291,9 +291,9 @@ def val(crnn, val_data_list_param, criterion, max_iter=100):
             print('%-20s => %-20s, gt: %-20s' % (raw_pred, pred, gt))
 
         accuracy = one_correct / float(max_iter * opt.batchSize)
-        print('测试丢失率: %f,Flag:%s 的成功率: %f' % (loss_avg.val(), val_data['dir'], accuracy))
+        print('测试Loss: %f,Flag: %s 的成功率: %f' % (loss_avg.val(), val_data['dir'], accuracy))
     accuracy = correct_Count / float(all_Count)
-    print('总的成功率:%f ,总验证文件数:%f ' % (accuracy, all_Count))
+    print('总的成功率: %f ,总验证文件数: %d ' % (accuracy, all_Count))
     return accuracy
 
 
@@ -379,7 +379,7 @@ for epoch in range(opt.niter):
 
         # 多少次batch显示一次进度
         if step % opt.displayInterval == 0:
-            print('epoch: [%d/%d],step: [%d-%d/%d], [%s] Loss: %f' % (
+            print('epoch: [%d/%d],step: [%d-%d/%d], [%-15s] Loss: %f' % (
                 epoch, opt.niter, step, one_step, max_train_data_lenght / len(train_data_list), train_data['dir'],
                 loss_avg.val()))
             loss_avg.reset()
