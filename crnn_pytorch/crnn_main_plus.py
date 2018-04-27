@@ -347,48 +347,58 @@ def keep_only_models(n=10):
         os.remove(model_file)
 
 
+# 最长的data长度
+max_train_data_lenght = 0
+for x in range(len(train_data_list)):
+    train_data = train_data_list[x]
+    train_loader = train_data['loader']
+
+    # 最长的长度是
+    if max_train_data_lenght < len(train_loader):
+        max_train_data_lenght = len(train_loader)
+
 # epochs 迭代训练多少次
 for epoch in range(opt.niter):
-    # loader的指针
-    # train_iter = iter(train_loader)
-    i = 0
+    # 步数
+    step = 0
+    # 文件索引
     fileIndex = 0
-    while fileIndex < len(train_data_list):
+    # 一个迭代 训练最长文件的步数
+    while step < max_train_data_lenght:
         # 本次要训练的模型是哪个
+        fileIndex %= len(train_data_list)
         train_data = train_data_list[fileIndex]
         train_loader = train_data['loader']
-        fileIndex += 1
-        print("epoch:{},file:{}/{}:".format(epoch, fileIndex, len(train_data_list), train_data['dir']))
-        train_iter = iter(train_loader)
-        one_train_step = 0
-        train_all_length = len(train_loader)
+        # 初始化一个iter
+        train_iter = None
+        if step % len(train_loader) == 0:
+            # 重置当前iter
+            train_iter = iter(train_loader)
+            train_data['iter'] = train_iter
+        else:
+            train_iter = train_data['iter']
+        # 步数更新
+        step += 1
+        # 所有变量都要求梯度
+        for p in crnn.parameters():
+            p.requires_grad = True
+        # 设置为训练模式
+        crnn.train()
+        # 训练一个Batch
+        cost = trainBatch(crnn, train_iter, criterion, optimizer)
+        loss_avg.add(cost)
 
-        # 本模型的训练
-        while one_train_step < len(train_loader):
-            # 所有变量都要求梯度
-            for p in crnn.parameters():
-                p.requires_grad = True
-            # 设置为训练模式
-            crnn.train()
-            # 训练一个Batch
-            cost = trainBatch(crnn, train_iter, criterion, optimizer)
-            loss_avg.add(cost)
-            # 本训练文件的训练batch+1
-            one_train_step += 1
-            # 多少次batch显示一次进度
-            if (one_train_step + 1) % opt.displayInterval == 0:
-                print('[%d/%d][%d/%d][%d/%d][%s] Loss: %f' % (
-                    epoch, opt.niter, fileIndex, len(train_data_list), one_train_step, len(train_loader), train_data['dir'],
-                    loss_avg.val()))
-                loss_avg.reset()
+        # 多少次batch显示一次进度
+        if step % opt.displayInterval == 0:
+            print('[%d/%d][%d/%d][%s] Loss: %f' % (
+                epoch, opt.niter, step, max_train_data_lenght, train_data['dir'], loss_avg.val()))
+            loss_avg.reset()
 
-            # 检查点:检查成功率,存储model，
-            if (one_train_step + 1) % opt.saveInterval == 0 or one_train_step == len(train_loader):
-                certVal = val(crnn, val_data_list, criterion)
-                time_format = time.strftime('%Y%m%d_%H%M%S')
-                # print("save model: {0}/netCRNN_{1}_{2}.pth".format(opt.experiment, epoch, i))
-                print("save model: {0}/netCRNN_{1}_{2}.pth".format(opt.experiment, time_format, int(certVal * 100)))
-                # torch.save(crnn.state_dict(), '{0}/netCRNN_{1}_{2}.pth'.format(opt.experiment, epoch, i))
-                torch.save(crnn.state_dict(),
-                           '{0}/netCRNN_{1}_{2}.pth'.format(opt.experiment, time_format, int(certVal * 100)))
-                keep_only_models()
+        # 检查点:检查成功率,存储model，
+        if step % opt.saveInterval == 0:
+            certVal = val(crnn, val_data_list, criterion)
+            time_format = time.strftime('%Y%m%d_%H%M%S')
+            print("save model: {0}/netCRNN_{1}_{2}.pth".format(opt.experiment, time_format, int(certVal * 100)))
+            torch.save(crnn.state_dict(),
+                       '{0}/netCRNN_{1}_{2}.pth'.format(opt.experiment, time_format, int(certVal * 100)))
+            keep_only_models()
