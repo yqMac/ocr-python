@@ -67,15 +67,10 @@ cudnn.benchmark = True
 if torch.cuda.is_available() and not opt.cuda:
     print("WARNING: You have a CUDA device, so you should probably run with --cuda")
 
-# 训练的数据集集合
-train_dataset_list = []
-# 训练的加载器
-train_loader_list = []
-
-# 验证的数据集
-val_dataset_list = []
-# 验证的加载器
-val_loader_list = []
+# 训练数据集
+train_data_list = []
+# 验证数据集
+val_data_list = []
 
 dataset_dir = opt.lmdbPath
 if dataset_dir is None:
@@ -86,6 +81,7 @@ if dataset_dir is None:
 def initTrainDataSets():
     trains_dir = dataset_dir
     fs = os.listdir(trains_dir)
+    index = 0
     for one in fs:
         # if not one.endswith(".mdb"):
         #     continue
@@ -103,32 +99,36 @@ def initTrainDataSets():
             shuffle=True, sampler=sampler,
             num_workers=int(opt.workers),
             collate_fn=dataset.alignCollate(imgH=opt.imgH, imgW=opt.imgW, keep_ratio=opt.keep_ratio))
-        train_dataset_list.append(one_dataset)
-        train_loader_list.append(one_loader)
+
+        train_data = {
+            "dir": one,
+            "dataset": one_dataset,
+            "loader": one_loader,
+            "index": index
+        }
+        index += 1
+        train_data_list.append(train_data)
 
 
 # 初始化加载 验证数据集
 def initValDataSets():
     fs = os.listdir(dataset_dir)
+    index = 0
     for one in fs:
         root_path = dataset_dir + "/" + one + "/val"
         print("添加校验数据集:{}".format(root_path))
         one_dataset = dataset.lmdbDataset(root=root_path, transform=dataset.resizeNormalize((100, 32)))
-        # assert one_dataset
-        # if opt.random_sample:
-        #     sampler = dataset.randomSequentialSampler(one_dataset, opt.batchSize)
-        # else:
-        #     sampler = None
-        # one_loader = torch.utils.data.DataLoader(
-        #     one_dataset, batch_size=opt.batchSize,
-        #     shuffle=True, sampler=sampler,
-        #     num_workers=int(opt.workers),
-        #     collate_fn=dataset.alignCollate(imgH=opt.imgH, imgW=opt.imgW, keep_ratio=opt.keep_ratio))
-        val_dataset_list.append(one_dataset)
-        # train_loader_list.append(one_loader)
+
         one_loader = torch.utils.data.DataLoader(one_dataset, shuffle=True, batch_size=opt.batchSize,
                                                  num_workers=int(opt.workers))
-        val_loader_list.append(one_loader)
+        val_data = {
+            "dir": one,
+            "dataset": one_dataset,
+            "loader": one_loader,
+            "index": index
+        }
+        index += 1
+        val_data_list.append(val_data)
 
 
 initTrainDataSets()
@@ -237,7 +237,7 @@ else:
     optimizer = optim.RMSprop(crnn.parameters(), lr=opt.lr)
 
 
-def val(crnn, loaderList, criterion, max_iter=100):
+def val(crnn, val_data_list_param, criterion, max_iter=100):
     print('开始校验准确性')
     for p in crnn.parameters():
         p.requires_grad = False
@@ -245,14 +245,15 @@ def val(crnn, loaderList, criterion, max_iter=100):
     i = 0
     all_Count = 0
     correct_Count = 0
-    while i < len(loaderList):
+    while i < len(val_data_list_param):
+        val_data = val_data_list_param[i]
         # datasetOne = datasetList[i]
         # data_loader = torch.utils.data.DataLoader(
         #     datasetOne, shuffle=True, batch_size=opt.batchSize, num_workers=int(opt.workers))
-        data_loader = loaderList[i]
-        print("val file process :{}/{}".format(i, len(loaderList)))
-
+        data_loader = val_data['loader']
         i += 1
+        print("验证进度:{}/{},当前Flag:{}".format(i, len(val_data_list_param), val_data['dir']))
+
         val_iter = iter(data_loader)
         one_index = 0
         one_correct = 0
@@ -292,9 +293,9 @@ def val(crnn, loaderList, criterion, max_iter=100):
             print('%-20s => %-20s, gt: %-20s' % (raw_pred, pred, gt))
 
         accuracy = one_correct / float(max_iter * opt.batchSize)
-        print('测试丢失率: %f,本包的成功率: %f' % (loss_avg.val(), accuracy))
+        print('测试丢失率: %f,Flag:%s 的成功率: %f' % (loss_avg.val(), val_data['dir'], accuracy))
     accuracy = correct_Count / float(all_Count)
-    print('总的成功率:%f' % accuracy)
+    print('总的成功率:%f ,总验证文件数:%f ' % (accuracy, all_Count))
     return accuracy
 
 
@@ -339,11 +340,12 @@ for epoch in range(opt.niter):
     # train_iter = iter(train_loader)
     i = 0
     fileIndex = 0
-    while fileIndex < len(train_loader_list):
+    while fileIndex < len(train_data_list):
         # 本次要训练的模型是哪个
-        train_loader = train_loader_list[fileIndex]
-        print("epoch:{},file:{}/{}".format(epoch, fileIndex, len(train_loader_list)))
+        train_data = train_data_list[fileIndex]
+        train_loader = train_data['loader']
         fileIndex += 1
+        print("epoch:{},file:{}/{}".format(epoch, fileIndex, len(train_data_list)))
         train_iter = iter(train_loader)
         one_train_step = 0
         train_all_length = len(train_loader)
@@ -363,13 +365,13 @@ for epoch in range(opt.niter):
             # 多少次batch显示一次进度
             if (one_train_step + 1) % opt.displayInterval == 0:
                 print('[%d/%d][%d/%d][%d/%d] Loss: %f' % (
-                    epoch, opt.niter, fileIndex, len(train_loader_list), one_train_step, len(train_loader),
+                    epoch, opt.niter, fileIndex, len(train_data_list), one_train_step, len(train_loader),
                     loss_avg.val()))
                 loss_avg.reset()
 
             # 检查点:检查成功率,存储model，
             if (one_train_step + 1) % opt.saveInterval == 0 or one_train_step == len(train_loader):
-                certVal = val(crnn, val_loader_list, criterion)
+                certVal = val(crnn, val_data_list, criterion)
                 time_format = time.strftime('%Y%m%d_%H%M%S')
                 # print("save model: {0}/netCRNN_{1}_{2}.pth".format(opt.experiment, epoch, i))
                 print("save model: {0}/netCRNN_{1}_{2}.pth".format(opt.experiment, time_format, int(certVal * 100)))
