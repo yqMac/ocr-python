@@ -335,7 +335,7 @@ def trainBatch(crnn, train_iter, criterion, optimizer):
     return cost
 
 
-def keep_only_models(n=30):
+def keep_only_models(n=10):
     model_files = sorted(glob(opt.experiment + '/{0}*'.format("netCRNN")))
     models_to_delete = model_files[:-n]
     for model_file in models_to_delete:
