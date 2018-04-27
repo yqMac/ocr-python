@@ -393,14 +393,14 @@ for epoch in range(opt.niter):
         loss_avg.add(cost)
 
         # 多少次batch显示一次进度
-        if one_step % opt.displayInterval == 0:
+        if step % opt.displayInterval == 0:
             print('epoch: [%d/%d],step: [%d/%d], [%s] Loss: %f' % (
                 epoch, opt.niter, one_step, max_train_data_lenght / len(train_data_list), train_data['dir'],
                 loss_avg.val()))
             loss_avg.reset()
 
         # 检查点:检查成功率,存储model，
-        if one_step % opt.saveInterval == 0:
+        if (one_step + 1) % opt.saveInterval == 0 and step % len(train_data_list) == 0:
             certVal = val(crnn, val_data_list, criterion)
             time_format = time.strftime('%Y%m%d_%H%M%S')
             print("save model: {0}/netCRNN_{1}_{2}.pth".format(opt.experiment, time_format, int(certVal * 100)))
