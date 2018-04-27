@@ -357,7 +357,7 @@ for epoch in range(opt.niter):
         train_data = train_data_list[fileIndex]
         train_loader = train_data['loader']
         fileIndex += 1
-        print("epoch:{},file:{}/{}".format(epoch, fileIndex, len(train_data_list)))
+        print("epoch:{},file:{}/{}:".format(epoch, fileIndex, len(train_data_list), train_data['dir']))
         train_iter = iter(train_loader)
         one_train_step = 0
         train_all_length = len(train_loader)
