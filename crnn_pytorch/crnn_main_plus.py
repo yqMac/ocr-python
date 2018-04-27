@@ -197,12 +197,20 @@ if crnnPath is not None:
         if pths[len(pths) - pre_file].endswith(".pth"):
             continue_path = crnnPath + "/" + pths[len(pths) - pre_file]
             print("从上次文件继续训练:{}".format(continue_path))
+            crnn = torch.nn.DataParallel(crnn)
+            state_dict = torch.load(continue_path)
             try:
-                crnn.load_state_dict(torch.load(continue_path))
-            except Exception as ex :
-                print ("加载时发生异常{0}，开始尝试使用DataParallel".format(ex.message))
-                crnn = torch.nn.DataParallel(crnn)
-                crnn.load_state_dict(torch.load(continue_path))
+                crnn.load_state_dict(state_dict)
+            except Exception as ex:
+                print("加载时发生异常{0}，开始尝试使用自定义dict".format(ex.message))
+                from collections import OrderedDict
+
+                new_state_dict = OrderedDict()
+                for k, v in state_dict.items():
+                    name = k[7:]  # remove `module.`
+                    new_state_dict[name] = v
+                # load params
+                crnn.load_state_dict(new_state_dict)
         else:
             print("你这不符合格式啊:{}".format(pths[0]))
 
