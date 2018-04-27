@@ -197,8 +197,15 @@ if crnnPath is not None:
         if pths[len(pths) - pre_file].endswith(".pth"):
             continue_path = crnnPath + "/" + pths[len(pths) - pre_file]
             print("从上次文件继续训练:{}".format(continue_path))
-            crnn = torch.nn.DataParallel(crnn)
-            crnn.load_state_dict(torch.load(continue_path))
+            try:
+                crnn = torch.nn.DataParallel(crnn)
+                crnn.load_state_dict(torch.load(continue_path))
+            except Exception as ex :
+                print ("加载时发生异常{0}，开始尝试不用DataParallel".format(ex.message))
+                crnn = crnn.CRNN(opt.imgH, nc, nclass, opt.nh)
+                crnn.apply(weights_init)
+                crnn.load_state_dict(torch.load(continue_path))
+
         else:
             print("你这不符合格式啊:{}".format(pths[0]))
 
