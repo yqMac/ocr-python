@@ -377,8 +377,8 @@ for epoch in range(opt.niter):
             one_train_step += 1
             # 多少次batch显示一次进度
             if (one_train_step + 1) % opt.displayInterval == 0:
-                print('[%d/%d][%d/%d][%d/%d] Loss: %f' % (
-                    epoch, opt.niter, fileIndex, len(train_data_list), one_train_step, len(train_loader),
+                print('[%d/%d][%d/%d][%d/%d][%s] Loss: %f' % (
+                    epoch, opt.niter, fileIndex, len(train_data_list), one_train_step, len(train_loader), train_data['dir'],
                     loss_avg.val()))
                 loss_avg.reset()
 
