@@ -188,14 +188,11 @@ if crnnPath is None or crnnPath == '':
     crnnPath = file_path + '/expr'
 if crnnPath is not None:
     pths = os.listdir(crnnPath)
-    # 因为最后一个文件有存储不完整的可能性,所以尽量以倒数第二个文件作为起始点，除非你每次存储的差距很大。
-    pre_file = 1
-    if len(pths) > 1:
-        pre_file = 2
+    # 解决了加载失败的问题，不需要找倒数第二个了，找最新的就行
     if len(pths) > 0:
         pths.sort()
-        if pths[len(pths) - pre_file].endswith(".pth"):
-            continue_path = crnnPath + "/" + pths[len(pths) - pre_file]
+        if pths[len(pths) - 1].endswith(".pth"):
+            continue_path = crnnPath + "/" + pths[len(pths) - 1]
             print("从上次文件继续训练:{}".format(continue_path))
             crnn = torch.nn.DataParallel(crnn)
             state_dict = torch.load(continue_path)
