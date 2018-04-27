@@ -40,7 +40,7 @@ parser.add_argument('--experiment', default=None, help='Where to store samples a
 parser.add_argument('--displayInterval', type=int, default=100, help='Interval to be displayed')
 parser.add_argument('--n_test_disp', type=int, default=10, help='Number of samples to display when test')
 parser.add_argument('--valInterval', type=int, default=100, help='Interval to be displayed')
-parser.add_argument('--saveInterval', type=int, default=200, help='Interval to be displayed')
+parser.add_argument('--saveInterval', type=int, default=800, help='Interval to be displayed')
 parser.add_argument('--adam', action='store_true', help='Whether to use adam (default is rmsprop)')
 parser.add_argument('--adadelta', action='store_true', default=True,
                     help='Whether to use adadelta (default is rmsprop)')
@@ -385,7 +385,7 @@ for epoch in range(opt.niter):
             loss_avg.reset()
 
         # 检查点:检查成功率,存储model，
-        if (one_step + 1) % opt.saveInterval == 0 and step % len(train_data_list) == 0:
+        if (step + 1) % opt.saveInterval == 0 and step % len(train_data_list) == 0:
             certVal = val(crnn, val_data_list, criterion)
             time_format = time.strftime('%Y%m%d_%H%M%S')
             print("save model: {0}/netCRNN_{1}_{2}.pth".format(opt.experiment, time_format, int(certVal * 100)))
