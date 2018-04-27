@@ -385,7 +385,7 @@ for epoch in range(opt.niter):
             loss_avg.reset()
 
         # 检查点:检查成功率,存储model，
-        if (step + 1) % opt.saveInterval == 0 and step % len(train_data_list) == 0:
+        if step % opt.saveInterval == 0 :
             certVal = val(crnn, val_data_list, criterion)
             time_format = time.strftime('%Y%m%d_%H%M%S')
             print("save model: {0}/netCRNN_{1}_{2}.pth".format(opt.experiment, time_format, int(certVal * 100)))
