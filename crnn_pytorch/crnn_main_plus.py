@@ -129,12 +129,12 @@ def initValDataSets():
         # print("添加校验数据集:{}".format(root_path))
         one_dataset = dataset.lmdbDataset(root=root_path, transform=dataset.resizeNormalize((100, 32)))
 
-        one_loader = torch.utils.data.DataLoader(one_dataset, shuffle=True, batch_size=opt.batchSize,
-                                                 num_workers=int(opt.workers))
+        # one_loader = torch.utils.data.DataLoader(one_dataset, shuffle=True, batch_size=opt.batchSize,
+        #                                          num_workers=int(opt.workers))
         val_data = {
             "dir": one,
             "dataset": one_dataset,
-            "loader": one_loader,
+            # "loader": one_loader,
             "index": index
         }
         index += 1
@@ -249,7 +249,9 @@ def val(crnn, val_data_list_param, criterion, max_iter=100):
         # datasetOne = datasetList[i]
         # data_loader = torch.utils.data.DataLoader(
         #     datasetOne, shuffle=True, batch_size=opt.batchSize, num_workers=int(opt.workers))
-        data_loader = val_data['loader']
+        data_set = val_data['dataset']
+        data_loader = torch.utils.data.DataLoader(
+            data_set, shuffle=True, batch_size=opt.batchSize, num_workers=int(opt.workers))
         i += 1
         # print("验证进度:{}/{},当前Flag:{}".format(i, len(val_data_list_param), val_data['dir']))
 
