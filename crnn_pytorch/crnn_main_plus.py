@@ -157,6 +157,7 @@ converter = utils.strLabelConverter(opt.alphabet)
 # CTCLoss
 criterion = CTCLoss()
 
+
 # 自定义 权重初始化 ，被crnn调用
 # custom weights initialization called on crnn
 def weights_init(m):
@@ -287,10 +288,11 @@ def val(crnn, val_data_list_param, criterion, max_iter=100):
                     correct_Count += 1
 
         raw_preds = converter.decode(preds.data, preds_size.data, raw=True)[:opt.n_test_disp]
-        for raw_pred, pred, gt in zip(raw_preds, sim_preds, cpu_texts):
-            print('%-20s => %-20s, gt: %-20s' % (raw_pred, pred, gt))
-
         accuracy = one_correct / float(max_iter * opt.batchSize)
+        if accuracy < 0.95:
+            for raw_pred, pred, gt in zip(raw_preds, sim_preds, cpu_texts):
+                print('%-20s => %-20s, gt: %-20s' % (raw_pred, pred, gt))
+
         print('测试Loss: %f,Flag: %s 的成功率: %f' % (loss_avg.val(), val_data['dir'], accuracy))
     accuracy = correct_Count / float(all_Count)
     print('总的成功率: %f ,总验证文件数: %d ' % (accuracy, all_Count))
@@ -385,7 +387,7 @@ for epoch in range(opt.niter):
             loss_avg.reset()
 
         # 检查点:检查成功率,存储model，
-        if step % opt.saveInterval == 0 :
+        if step % opt.saveInterval == 0:
             certVal = val(crnn, val_data_list, criterion)
             time_format = time.strftime('%Y%m%d_%H%M%S')
             print("save model: {0}/netCRNN_{1}_{2}.pth".format(opt.experiment, time_format, int(certVal * 100)))
