@@ -295,7 +295,7 @@ def val(crnn, val_data_list_param, criterion, max_iter=100):
             for raw_pred, pred, gt in zip(raw_preds, sim_preds, cpu_texts):
                 print('%-20s => %-20s, gt: %-20s' % (raw_pred, pred, gt))
 
-        print('验证 %-3d/%-3d,Loss: %f,Flag: [%-15s] 的成功率: %f' % (
+        print('验证 %-3d/%d,Loss: %f,Flag: [%-15s] 的成功率: %f' % (
             i, len(val_data_list_param), loss_avg.val(), val_data['dir'], accuracy))
     accuracy = correct_Count / float(all_Count)
     print('总的成功率: %f ,总验证文件数: %d ' % (accuracy, all_Count))
@@ -384,7 +384,7 @@ for epoch in range(opt.niter):
 
         # 多少次batch显示一次进度
         if step % opt.displayInterval == 0:
-            print('epoch: [%-5d/%-5d],step: [%d-%d/%d], Loss: %f' % (
+            print('epoch: [%-5d/%d],step: [%-4d-%-4d/%d], Loss: %f' % (
                 epoch, opt.niter, step, one_step, max_train_data_lenght / len(train_data_list), loss_avg.val()))
             loss_avg.reset()
 
