@@ -251,7 +251,7 @@ def val(crnn, val_data_list_param, criterion, max_iter=100):
         #     datasetOne, shuffle=True, batch_size=opt.batchSize, num_workers=int(opt.workers))
         data_loader = val_data['loader']
         i += 1
-        print("验证进度:{}/{},当前Flag:{}".format(i, len(val_data_list_param), val_data['dir']))
+        # print("验证进度:{}/{},当前Flag:{}".format(i, len(val_data_list_param), val_data['dir']))
 
         val_iter = iter(data_loader)
         one_index = 0
@@ -293,7 +293,8 @@ def val(crnn, val_data_list_param, criterion, max_iter=100):
             for raw_pred, pred, gt in zip(raw_preds, sim_preds, cpu_texts):
                 print('%-20s => %-20s, gt: %-20s' % (raw_pred, pred, gt))
 
-        print('测试Loss: %f,Flag: %s 的成功率: %f' % (loss_avg.val(), val_data['dir'], accuracy))
+        print('验证 %d/%d,Loss: %f,Flag: %-15s 的成功率: %f' % (
+        i, len(val_data_list_param), loss_avg.val(), val_data['dir'], accuracy))
     accuracy = correct_Count / float(all_Count)
     print('总的成功率: %f ,总验证文件数: %d ' % (accuracy, all_Count))
     return accuracy
