@@ -80,8 +80,9 @@ def addCRNNModel(one):
         }
         cracker_map[id] = model_data
         logger.info('finished loading pretrained model {}'.format(one))
-    except Exception, e:
+    except Exception as e:
         logger.info("加载异常: {}".format(e.message))
+        print e
 
 
 # 多线程加载，加快加载速度
