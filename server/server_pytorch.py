@@ -17,7 +17,7 @@ sys.path.append("..")
 import crnn_pytorch.dataset as dataset
 import crnn_pytorch.models.crnn as crnn
 import crnn_pytorch.utils as utils
-import inference
+# import inference
 from rookie_utils import mod_config
 from rookie_utils.Logger import Logger
 import  logging
@@ -168,8 +168,8 @@ class GetHandler(BaseHTTPRequestHandler):
                     if type == "theano_ocr":
                         w = cracker_data["w"]
                         h = cracker_data["h"]
-                        code = inference.read_and_parse(image_data, cracker, w, h)
-                        result["result"] = code
+                        # code = inference.read_and_parse(image_data, cracker, w, h)
+                        # result["result"] = code
                     else:
                         image = Image.open(BytesIO(image_data)).convert('L')
                         image = transformer(image)
