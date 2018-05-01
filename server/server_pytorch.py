@@ -52,12 +52,21 @@ def addCRNNModel(one):
         steps = one.split("_")[-2]
         version = "1.0"
         model = crnn.CRNN(32, 1, 37, 256)
+        model = torch.nn.DataParallel(model)
+        state_dict = torch.load(model_path + one, lambda storage, loc: storage)
         try:
-            model.load_state_dict(torch.load(model_path + one, lambda storage, loc: storage))
-        except Exception, e:
+            model.load_state_dict(state_dict)
+        except Exception as e:
             logger.error("model format error: {}, try parallel model".format(e.message))
-            model = torch.nn.DataParallel(model)
-            model.load_state_dict(torch.load(model_path + one, lambda storage, loc: storage))
+            from collections import OrderedDict
+
+            new_state_dict = OrderedDict()
+            for k, v in state_dict.items():
+                name = k[7:]  # remove `module.`
+                new_state_dict[name] = v
+            # load params
+            model.load_state_dict(new_state_dict)
+            # model.load_state_dict(torch.load(model_path + one, lambda storage, loc: storage))
         model.eval()
         model_data = {
             "id": id,
