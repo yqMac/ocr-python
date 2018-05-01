@@ -32,7 +32,8 @@ def gen_captcha_text_and_image():
     '''生成字符对应的验证码 '''
     image = ImageCaptcha()  # 导入验证码包 生成一张空白图
 
-    captcha_text = random_captcha_text()  # 随机一个验证码内容
+    text_length = random.randint(4, 6)
+    captcha_text = random_captcha_text(captcha_size=text_length)  # 随机一个验证码内容
     captcha_text = ''.join(captcha_text)  # 类型转换为字符串
 
     captcha = image.generate(captcha_text)
