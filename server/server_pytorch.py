@@ -52,7 +52,7 @@ def addCRNNModel(one):
         steps = one.split("_")[-2]
         version = "1.0"
         model = crnn.CRNN(32, 1, 37, 256)
-        model = torch.nn.DataParallel(model)
+        # model = torch.nn.DataParallel(model)
         state_dict = torch.load(model_path + one, lambda storage, loc: storage)
         try:
             model.load_state_dict(state_dict)
@@ -80,9 +80,9 @@ def addCRNNModel(one):
         }
         cracker_map[id] = model_data
         logger.info('finished loading pretrained model {}'.format(one))
-    except Exception as e:
-        logger.info("加载异常: {}".format(e.message))
-        print e
+    except Exception as ex:
+        logger.info("加载异常: {}".format(ex.message))
+        print ex
 
 
 # 多线程加载，加快加载速度
