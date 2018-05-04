@@ -123,13 +123,13 @@ if __name__ == '__main__':
             if not os.path.isdir(file):
                 print ("不是文件夹,跳过{}".format(file))
                 continue
-            head = file
-            path = opt.imageDirPath + "/" + file
+            head = file.split('/')[-1]
+            path = file
             if os.path.exists(path + "/success"):
                 path += "/success"
 
             paths = glob(path + "/*.*")
-            print("初始化加载:dir:{},flag:{}".format(path,head))
+            print("初始化加载:dir:{},flag:{}".format(path, head))
             random.shuffle(paths)
             createDataset(opt.lmdbPath, paths, head)
     else:
