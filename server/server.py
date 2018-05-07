@@ -267,6 +267,8 @@ if project_path is None or project_path == '':
 
 # 日志输出
 log_path = project_path + mod_config.getConfig("logger", "file")
+if not os.path.exists(log_path):
+    os.makedirs(log_path)
 logger = Logger(log_path, logging.INFO, logging.INFO)
 # 线程锁，防止防止model时出问题
 # model_lock = thread.allocate_lock()
