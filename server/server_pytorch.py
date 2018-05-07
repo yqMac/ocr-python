@@ -1,5 +1,5 @@
 # coding:utf-8
-
+import tensorShiBie as tensor
 import base64
 import json
 import os
@@ -12,7 +12,7 @@ from SocketServer import ThreadingMixIn
 import torch
 from PIL import Image
 from torch.autograd import Variable
-import tensorShiBie as tensor
+
 
 sys.path.append("..")
 import crnn_pytorch.dataset as dataset
