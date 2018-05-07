@@ -45,6 +45,21 @@ def list_model_count():
     return count
 
 
+# 监听文件夹的处理方法
+class FileEventHandler(FileSystemEventHandler):
+    def __init__(self):
+        FileSystemEventHandler.__init__(self)
+
+    def on_moved(self, event):
+        print '1'
+    def on_created(self, event):
+        print '2'
+    def on_deleted(self, event):
+        print '3'
+    def on_modified(self, event):
+        print '4'
+
+
 # 加载Model
 def addTheanoModel(one):
     start_time = time.clock()
@@ -162,8 +177,8 @@ def initModes():
             print("格式无法匹配模型theano或者crnn: {}".format(one))
     # 启动文件夹监听服务
     global observer
-    # event_handler = FileEventHandler()
-    # observer.schedule(event_handler, watcher_path, True)
+    event_handler = FileEventHandler()
+    observer.schedule(event_handler, watcher_path, True)
     observer.start()
     observer.join()
 
