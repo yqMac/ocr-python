@@ -23,7 +23,7 @@ import inference
 import theano_ocr.model as theano_model
 from rookie_utils import mod_config
 from rookie_utils.Logger import Logger
-from rookie_utils.models_watcher import *
+# from rookie_utils.models_watcher import *
 from theano_ocr.model.captcha_cracker import CaptchaCracker
 from fontTools.ttLib import TTFont
 import uuid
@@ -44,20 +44,20 @@ def list_model_count():
             count += 1
     return count
 
-
-# 监听文件夹的处理方法
-class FileEventHandler(FileSystemEventHandler):
-    def __init__(self):
-        FileSystemEventHandler.__init__(self)
-
-    def on_moved(self, event):
-        print '1'
-    def on_created(self, event):
-        print '2'
-    def on_deleted(self, event):
-        print '3'
-    def on_modified(self, event):
-        print '4'
+#
+# # 监听文件夹的处理方法
+# class FileEventHandler(FileSystemEventHandler):
+#     def __init__(self):
+#         FileSystemEventHandler.__init__(self)
+#
+#     def on_moved(self, event):
+#         print '1'
+#     def on_created(self, event):
+#         print '2'
+#     def on_deleted(self, event):
+#         print '3'
+#     def on_modified(self, event):
+#         print '4'
 
 
 # 加载Model
@@ -175,12 +175,12 @@ def initModes():
             # t.start()
         else:
             print("格式无法匹配模型theano或者crnn: {}".format(one))
-    # 启动文件夹监听服务
-    global observer
-    event_handler = FileEventHandler()
-    observer.schedule(event_handler, watcher_path, True)
-    observer.start()
-    observer.join()
+    # # 启动文件夹监听服务
+    # global observer
+    # event_handler = FileEventHandler()
+    # observer.schedule(event_handler, watcher_path, True)
+    # observer.start()
+    # observer.join()
 
 
 # 处理网络请求
@@ -391,7 +391,7 @@ sessMap = {}
 grapMap = {}
 
 # 监听服务
-observer = Observer()
+# observer = Observer()
 # 启线程加载Model
 threading.Thread(target=initModes).start()
 
@@ -408,5 +408,5 @@ if __name__ == '__main__':
         print(e)
     finally:
         print('final')
-        observer.stop()
+        # observer.stop()
         sys.exit()
