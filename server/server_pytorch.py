@@ -57,7 +57,6 @@ def addCRNNModel(one):
             model.load_state_dict(state_dict)
         except Exception as e:
             logger.error("model format error: {}, try parallel model".format(e.message))
-            model = torch.nn.DataParallel(model)
             from collections import OrderedDict
 
             new_state_dict = OrderedDict()
@@ -66,7 +65,9 @@ def addCRNNModel(one):
                 new_state_dict[name] = v
             # load params
             model.load_state_dict(new_state_dict)
-            # model.load_state_dict(torch.load(model_path + one, lambda storage, loc: storage))
+
+        for p in model.parameters():
+            p.requires_grad = False
         model.eval()
         model_data = {
             "id": id,
@@ -80,9 +81,8 @@ def addCRNNModel(one):
         }
         cracker_map[id] = model_data
         logger.info('finished loading pretrained model {}'.format(one))
-    except Exception as ex:
-        logger.info("加载异常: {}".format(ex.message))
-        print ex
+    except Exception, e:
+        logger.info("加载异常: {}".format(e.message))
 
 
 # 多线程加载，加快加载速度
@@ -257,6 +257,9 @@ if project_path is None or project_path == '':
 
 # 日志输出
 log_path = project_path + mod_config.getConfig("logger", "file")
+if not os.path.exists(os.path.dirname(log_path)):
+    os.makedirs(os.path.dirname(log_path))
+
 logger = Logger(log_path, logging.INFO, logging.INFO)
 # 线程锁，防止防止model时出问题
 # model_lock = thread.allocate_lock()
