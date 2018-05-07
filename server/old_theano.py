@@ -97,13 +97,6 @@ def initModes():
             # t.start()
         else:
             print("格式无法匹配模型theano或者crnn: {}".format(one))
-    # 启动文件夹监听服务
-    global observer
-    event_handler = FileEventHandler()
-    observer.schedule(event_handler, watcher_path, True)
-    observer.start()
-    observer.join()
-
 
 # 处理网络请求
 class GetHandler(BaseHTTPRequestHandler):
