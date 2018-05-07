@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 import base64
-import logging
 from StringIO import StringIO
 import json
 import os
@@ -161,7 +160,12 @@ def initModes():
             # t.start()
         else:
             print("格式无法匹配模型theano或者crnn: {}".format(one))
-
+    # 启动文件夹监听服务
+    global observer
+    # event_handler = FileEventHandler()
+    # observer.schedule(event_handler, watcher_path, True)
+    observer.start()
+    observer.join()
 
 
 # 处理网络请求
@@ -372,6 +376,7 @@ sessMap = {}
 grapMap = {}
 
 # 监听服务
+observer = Observer()
 # 启线程加载Model
 threading.Thread(target=initModes).start()
 
@@ -388,5 +393,5 @@ if __name__ == '__main__':
         print(e)
     finally:
         print('final')
-
+        observer.stop()
         sys.exit()
