@@ -1,28 +1,25 @@
 # coding:utf-8
-
 import base64
 import json
+import logging
 import os
 import sys
 import threading
 from BaseHTTPServer import BaseHTTPRequestHandler
 from BaseHTTPServer import HTTPServer
-from io import BytesIO
+from io import BytesIO, StringIO
 from SocketServer import ThreadingMixIn
 import torch
 from PIL import Image
 from torch.autograd import Variable
+import tensorShiBie as tensor
 
 sys.path.append("..")
 import crnn_pytorch.dataset as dataset
 import crnn_pytorch.models.crnn as crnn
 import crnn_pytorch.utils as utils
-import inference
-import theano_ocr.model as theano_model
 from rookie_utils import mod_config
 from rookie_utils.Logger import Logger
-from rookie_utils.models_watcher import *
-from theano_ocr.model.captcha_cracker import CaptchaCracker
 from fontTools.ttLib import TTFont
 import uuid
 
@@ -43,125 +40,6 @@ def list_model_count():
     return count
 
 
-# 监听文件夹的处理方法
-class FileEventHandler(FileSystemEventHandler):
-    def __init__(self):
-        FileSystemEventHandler.__init__(self)
-
-    def on_moved(self, event):
-        if event.is_directory:
-            logger.info(("directory moved from {0} to {1}".format(event.src_path, event.dest_path)))
-        else:
-            logger.info(("file moved from {0} to {1}".format(event.src_path, event.dest_path)))
-
-    def on_created(self, event):
-        if event.is_directory:
-            logger.info(("directory created:{0}".format(event.src_path)))
-        else:
-            logger.info(("file created:{0}".format(event.src_path)))
-            file_name = os.path.split(os.path.realpath(event.src_path))[1]
-            statinfo = os.stat(event.src_path)
-            msize = statinfo.st_size
-            max_wait_loop = 0
-            # 最多等待1个小时 360个10秒为1小时
-            while max_wait_loop < (6 * 10 * 6):
-                time.sleep(10)
-                statinfo = os.stat(event.src_path)
-                if statinfo.st_size - msize == 0:
-                    logger.info('认为新model:{0}传输完成，最终大小{1},30秒后开始加载'.format(file_name, (statinfo.st_size)))
-                    time.sleep(30)
-                    if file_name.startswith("lstm"):
-                        addTheanoModel(file_name)
-                    elif file_name.startswith("crnn"):
-                        addCRNNModel(file_name)
-                    else:
-                        logger.info("文件名称有误，请重新上传：{}".format(file_name))
-                    break
-                msize = statinfo.st_size
-                max_wait_loop = max_wait_loop + 1
-
-    def on_deleted(self, event):
-        if event.is_directory:
-            logger.info(("directory deleted:{0}".format(event.src_path)))
-        else:
-            logger.info(("file deleted:{0}".format(event.src_path)))
-
-    def on_modified(self, event):
-        if event.is_directory:
-            logger.info(("directory modified:{0}".format(event.src_path)))
-        else:
-
-            logger.info(("file modified:{0}".format(event.src_path)))
-
-
-# 加载Model
-def addTheanoModel(one):
-    start_time = time.clock()
-
-    # global model_lock
-    id = ''
-    w = 80
-    h = 150
-    steps = 8
-    version = "1.0"
-    model_data = {}
-
-    try:
-        logger.info("start init cracker:{0}".format(one))
-        if not one.endswith(".npz"):
-            logger.error("{0}不以.npz结尾，不进行初始化".format(one))
-            return
-
-        if one.startswith("rookie"):
-            vs = one.split("_")
-            id = vs[1]
-            w = 150
-            h = 80
-            steps = 8
-            version = "2.0"
-        else:
-            h = one.split("_")[-5]
-            w = one.split("_")[-4]
-            id = one.split("_")[-3]
-            steps = one.split("_")[-2]
-            version = "1.0"
-        logger.info("{0}分类完毕，version:{1},开始初始化".format(one, version))
-        id_cracker = theano_model.captcha_cracker.CaptchaCracker(
-            model_path + one,
-            (None, 1, int(h), int(w)),
-            includeCapital=False,
-            multi_chars=True,
-            rescale_in_preprocessing=False,
-            num_rnn_steps=int(steps),
-            use_mask_input=True)
-        logger.info("{0}分类完毕，version:{1},初始化完毕".format(one, version))
-        model_data = {
-            "id": id,
-            "w": w,
-            "h": h,
-            "steps": steps,
-            "id_cracker": id_cracker,
-            "file_name": one,
-            "version": version,
-            "type": "theano_ocr"
-        }
-        logger.info("{0}分类完毕，开始进行加载".format(one))
-    except Exception, e:
-        logger.error("{0}分类完毕，加载异常了:{1}".format(one, e.message))
-
-    try:
-        # 检测key是否已经存在
-        if cracker_map.has_key(id):
-            logger.info("key {0} 已经存在，文件 {1} 加载失败,解析后数据: {2}".format(id, one, model_data))
-        else:
-            cracker_map[id] = model_data
-    except Exception, e:
-        logger.error("{0}加载发生异常：{1}".format(one, e.message))
-    finally:
-        logger.info("{0}加载结束，释放锁".format(one))
-    logger.info("finish init cracker:{0},spend{1}".format(id, time.clock() - start_time))
-
-
 def addCRNNModel(one):
     try:
         logger.info('loading pretrained model from {}'.format(one))
@@ -173,12 +51,24 @@ def addCRNNModel(one):
         steps = one.split("_")[-2]
         version = "1.0"
         model = crnn.CRNN(32, 1, 37, 256)
+        model = torch.nn.DataParallel(model)
+        # model.load_state_dict(torch.load(model_path + one, lambda storage, loc: storage))
+        state_dict = torch.load(model_path + one, lambda storage, loc: storage)
+
         try:
-            model.load_state_dict(torch.load(model_path + one, lambda storage, loc: storage))
-        except Exception, e:
+            model.load_state_dict(state_dict)
+        except Exception as e:
             logger.error("model format error: {}, try parallel model".format(e.message))
-            model = torch.nn.DataParallel(model)
-            model.load_state_dict(torch.load(model_path + one, lambda storage, loc: storage))
+            from collections import OrderedDict
+            new_state_dict = OrderedDict()
+            for k, v in state_dict.items():
+                name = k[7:]  # remove `module.`
+                new_state_dict[name] = v
+            # load params
+            model.load_state_dict(new_state_dict)
+
+        for p in model.parameters():
+            p.requires_grad = False
         model.eval()
         model_data = {
             "id": id,
@@ -199,22 +89,10 @@ def addCRNNModel(one):
 # 多线程加载，加快加载速度
 def initModes():
     for one in list_model:
-        if one.startswith("lstm"):
-            addTheanoModel(one)
-            # t = threading.Thread(target=addTheanoModel, args=(one,))
-            # t.start()
-        elif one.startswith("crnn"):
+        if one.startswith("crnn"):
             addCRNNModel(one)
-            # t = threading.Thread(target=addCRNNModel, args=(one,))
-            # t.start()
         else:
             print("格式无法匹配模型theano或者crnn: {}".format(one))
-    # 启动文件夹监听服务
-    global observer
-    event_handler = FileEventHandler()
-    observer.schedule(event_handler, watcher_path, True)
-    observer.start()
-    observer.join()
 
 
 # 处理网络请求
@@ -282,28 +160,50 @@ class GetHandler(BaseHTTPRequestHandler):
                     if missing_padding:
                         image_data += b'=' * missing_padding
                     image_data = base64.b64decode(image_data)
-                    # model_data = {"id": id, "w": w, "h": h, "steps": steps, "id_cracker": id_cracker}
+
                     type = cracker_data["type"]
                     cracker = cracker_data["id_cracker"]
-                    if type == "theano_ocr":
-                        w = cracker_data["w"]
-                        h = cracker_data["h"]
-                        code = inference.read_and_parse(image_data, cracker, w, h)
-                        result["result"] = code
-                    else:
-                        image = Image.open(BytesIO(image_data)).convert('L')
-                        image = transformer(image)
-                        if torch.cuda.is_available():
-                            image = image.cuda()
-                        image = image.view(1, *image.size())
-                        image = Variable(image)
-                        preds = cracker(image)
+                    image = Image.open(BytesIO(image_data)).convert('L')
+                    image = transformer(image)
+                    if torch.cuda.is_available():
+                        image = image.cuda()
+                    image = image.view(1, *image.size())
+                    image = Variable(image)
+                    preds = cracker(image)
+                    _, preds = preds.max(2)
+                    preds = preds.transpose(1, 0).contiguous().view(-1)
+                    preds_size = Variable(torch.IntTensor([preds.size(0)]))
+                    sim_pred = converter.decode(preds.data, preds_size.data, raw=False)
+                    result["result"] = sim_pred
+                    result["success"] = True
+                except Exception, e:
+                    result["msg"] = "识别过程发生异常"
+                    result["ex"] = e.message
+        elif '/pyTensorflow' == self.path:
+            images = []
+            content_len = int(self.headers.getheader('content-length'))
+            post_body = self.rfile.read(content_len)
+            data = json.loads(post_body)
+            if (not data.has_key("images")) or data['images'] == "":
+                result["success"] = False
+                result["msg"] = "images不能为空"
+            else:
+                try:
+                    site = data["site"]
+                    imageDataList = data['images']
+                    for image_data in imageDataList:
+                        missing_padding = 4 - len(image_data) % 4
+                        if missing_padding:
+                            image_data += b'=' * missing_padding
+                        imageByte = base64.b64decode(image_data)
+                        img = Image.open(BytesIO(imageByte))
+                        images.append(img)
+                    print 'go into tensorFlow'
+                    resStr = tensor.domain(images, site, sessMap, grapMap)
+                    print 'out of  tensorFlow'
 
-                        _, preds = preds.max(2)
-                        preds = preds.transpose(1, 0).contiguous().view(-1)
-                        preds_size = Variable(torch.IntTensor([preds.size(0)]))
-                        sim_pred = converter.decode(preds.data, preds_size.data, raw=False)
-                        result["result"] = sim_pred
+                    result["result"] = resStr
+
                     result["success"] = True
                 except Exception, e:
                     result["msg"] = "识别过程发生异常"
@@ -360,6 +260,11 @@ class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
 mod_config.setPath(".")
 # 项目目录
 project_path = mod_config.getConfig("project", "path")
+if project_path is None or project_path == '':
+    # server_path = os.getcwd()
+    server_path = os.path.split(os.path.realpath(__file__))[0]
+    project_path = os.path.dirname(server_path)
+
 # 日志输出
 log_path = project_path + mod_config.getConfig("logger", "file")
 logger = Logger(log_path, logging.INFO, logging.INFO)
@@ -369,16 +274,16 @@ logger = Logger(log_path, logging.INFO, logging.INFO)
 model_path = project_path + mod_config.getConfig("model_params", "path")
 
 font_path = project_path + mod_config.getConfig("font_params", "path")
-# 监控文件夹
-watcher_path = project_path + mod_config.getConfig("watcher_params", "path")
-logger.info('要监听的文件夹：{0}'.format(watcher_path))
 
 list_model = os.listdir(model_path)
 # 所有model的缓存
 cracker_map = {}
 
-# 监听服务
-observer = Observer()
+# 所有sess缓存
+sessMap = {}
+# 所有graph缓存
+grapMap = {}
+
 # 启线程加载Model
 threading.Thread(target=initModes).start()
 
@@ -386,8 +291,8 @@ if __name__ == '__main__':
     # 读取服务发布端口
     port = mod_config.getConfig("server", "port")
     try:
+        # 启动Http服务
         server = ThreadedHTTPServer(('0.0.0.0', int(port)), GetHandler)
-        # server = HTTPServer(('0.0.0.0', int(port)), GetHandler)
         logger.info('Starting server with port:{0}'.format(port))
         server.serve_forever()
     except Exception, e:
@@ -395,5 +300,4 @@ if __name__ == '__main__':
         print(e)
     finally:
         print('final')
-        observer.stop()
         sys.exit()

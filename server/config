@@ -1,6 +1,6 @@
 [project]
-path=/home/tianchuang/rookie/work/pythonOcr
-
+path=
+# 都是相对于项目目录的路径
 [model_params]
 path=/data/model/
 
