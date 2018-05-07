@@ -19,12 +19,12 @@ sys.path.append("..")
 import crnn_pytorch.dataset as dataset
 import crnn_pytorch.models.crnn as crnn
 import crnn_pytorch.utils as utils
-import inference
-import theano_ocr.model as theano_model
+# import inference
+# import theano_ocr.model as theano_model
 from rookie_utils import mod_config
 from rookie_utils.Logger import Logger
 from rookie_utils.models_watcher import *
-from theano_ocr.model.captcha_cracker import CaptchaCracker
+# from theano_ocr.model.captcha_cracker import CaptchaCracker
 from fontTools.ttLib import TTFont
 import uuid
 
@@ -59,73 +59,73 @@ class FileEventHandler(FileSystemEventHandler):
     def on_modified(self, event):
         print '4'
 
-
-# 加载Model
-def addTheanoModel(one):
-    start_time = time.clock()
-
-    # global model_lock
-    id = ''
-    w = 80
-    h = 150
-    steps = 8
-    version = "1.0"
-    model_data = {}
-
-    try:
-        logger.info("start init cracker:{0}".format(one))
-        if not one.endswith(".npz"):
-            logger.error("{0}不以.npz结尾，不进行初始化".format(one))
-            return
-
-        if one.startswith("rookie"):
-            vs = one.split("_")
-            id = vs[1]
-            w = 150
-            h = 80
-            steps = 8
-            version = "2.0"
-        else:
-            h = one.split("_")[-5]
-            w = one.split("_")[-4]
-            id = one.split("_")[-3]
-            steps = one.split("_")[-2]
-            version = "1.0"
-        logger.info("{0}分类完毕，version:{1},开始初始化".format(one, version))
-        id_cracker = theano_model.captcha_cracker.CaptchaCracker(
-            model_path + one,
-            (None, 1, int(h), int(w)),
-            includeCapital=False,
-            multi_chars=True,
-            rescale_in_preprocessing=False,
-            num_rnn_steps=int(steps),
-            use_mask_input=True)
-        logger.info("{0}分类完毕，version:{1},初始化完毕".format(one, version))
-        model_data = {
-            "id": id,
-            "w": w,
-            "h": h,
-            "steps": steps,
-            "id_cracker": id_cracker,
-            "file_name": one,
-            "version": version,
-            "type": "theano_ocr"
-        }
-        logger.info("{0}分类完毕，开始进行加载".format(one))
-    except Exception, e:
-        logger.error("{0}分类完毕，加载异常了:{1}".format(one, e.message))
-
-    try:
-        # 检测key是否已经存在
-        if cracker_map.has_key(id):
-            logger.info("key {0} 已经存在，文件 {1} 加载失败,解析后数据: {2}".format(id, one, model_data))
-        else:
-            cracker_map[id] = model_data
-    except Exception, e:
-        logger.error("{0}加载发生异常：{1}".format(one, e.message))
-    finally:
-        logger.info("{0}加载结束，释放锁".format(one))
-    logger.info("finish init cracker:{0},spend{1}".format(id, time.clock() - start_time))
+#
+# # 加载Model
+# def addTheanoModel(one):
+#     start_time = time.clock()
+#
+#     # global model_lock
+#     id = ''
+#     w = 80
+#     h = 150
+#     steps = 8
+#     version = "1.0"
+#     model_data = {}
+#
+#     try:
+#         logger.info("start init cracker:{0}".format(one))
+#         if not one.endswith(".npz"):
+#             logger.error("{0}不以.npz结尾，不进行初始化".format(one))
+#             return
+#
+#         if one.startswith("rookie"):
+#             vs = one.split("_")
+#             id = vs[1]
+#             w = 150
+#             h = 80
+#             steps = 8
+#             version = "2.0"
+#         else:
+#             h = one.split("_")[-5]
+#             w = one.split("_")[-4]
+#             id = one.split("_")[-3]
+#             steps = one.split("_")[-2]
+#             version = "1.0"
+#         logger.info("{0}分类完毕，version:{1},开始初始化".format(one, version))
+#         id_cracker = theano_model.captcha_cracker.CaptchaCracker(
+#             model_path + one,
+#             (None, 1, int(h), int(w)),
+#             includeCapital=False,
+#             multi_chars=True,
+#             rescale_in_preprocessing=False,
+#             num_rnn_steps=int(steps),
+#             use_mask_input=True)
+#         logger.info("{0}分类完毕，version:{1},初始化完毕".format(one, version))
+#         model_data = {
+#             "id": id,
+#             "w": w,
+#             "h": h,
+#             "steps": steps,
+#             "id_cracker": id_cracker,
+#             "file_name": one,
+#             "version": version,
+#             "type": "theano_ocr"
+#         }
+#         logger.info("{0}分类完毕，开始进行加载".format(one))
+#     except Exception, e:
+#         logger.error("{0}分类完毕，加载异常了:{1}".format(one, e.message))
+#
+#     try:
+#         # 检测key是否已经存在
+#         if cracker_map.has_key(id):
+#             logger.info("key {0} 已经存在，文件 {1} 加载失败,解析后数据: {2}".format(id, one, model_data))
+#         else:
+#             cracker_map[id] = model_data
+#     except Exception, e:
+#         logger.error("{0}加载发生异常：{1}".format(one, e.message))
+#     finally:
+#         logger.info("{0}加载结束，释放锁".format(one))
+#     logger.info("finish init cracker:{0},spend{1}".format(id, time.clock() - start_time))
 
 
 def addCRNNModel(one):
@@ -166,7 +166,8 @@ def addCRNNModel(one):
 def initModes():
     for one in list_model:
         if one.startswith("lstm"):
-            addTheanoModel(one)
+            print '1'
+            # addTheanoModel(one)
             # t = threading.Thread(target=addTheanoModel, args=(one,))
             # t.start()
         elif one.startswith("crnn"):
@@ -251,25 +252,19 @@ class GetHandler(BaseHTTPRequestHandler):
                     # model_data = {"id": id, "w": w, "h": h, "steps": steps, "id_cracker": id_cracker}
                     type = cracker_data["type"]
                     cracker = cracker_data["id_cracker"]
-                    if type == "theano_ocr":
-                        w = cracker_data["w"]
-                        h = cracker_data["h"]
-                        code = inference.read_and_parse(image_data, cracker, w, h)
-                        result["result"] = code
-                    else:
-                        image = Image.open(BytesIO(image_data)).convert('L')
-                        image = transformer(image)
-                        if torch.cuda.is_available():
-                            image = image.cuda()
-                        image = image.view(1, *image.size())
-                        image = Variable(image)
-                        preds = cracker(image)
+                    image = Image.open(BytesIO(image_data)).convert('L')
+                    image = transformer(image)
+                    if torch.cuda.is_available():
+                        image = image.cuda()
+                    image = image.view(1, *image.size())
+                    image = Variable(image)
+                    preds = cracker(image)
 
-                        _, preds = preds.max(2)
-                        preds = preds.transpose(1, 0).contiguous().view(-1)
-                        preds_size = Variable(torch.IntTensor([preds.size(0)]))
-                        sim_pred = converter.decode(preds.data, preds_size.data, raw=False)
-                        result["result"] = sim_pred
+                    _, preds = preds.max(2)
+                    preds = preds.transpose(1, 0).contiguous().view(-1)
+                    preds_size = Variable(torch.IntTensor([preds.size(0)]))
+                    sim_pred = converter.decode(preds.data, preds_size.data, raw=False)
+                    result["result"] = sim_pred
                     result["success"] = True
                 except Exception, e:
                     result["msg"] = "识别过程发生异常"
