@@ -19,10 +19,12 @@ sys.path.append("..")
 import crnn_pytorch.dataset as dataset
 import crnn_pytorch.models.crnn as crnn
 import crnn_pytorch.utils as utils
-
+import inference
+import theano_ocr.model as theano_model
 from rookie_utils import mod_config
 from rookie_utils.Logger import Logger
-
+from rookie_utils.models_watcher import *
+from theano_ocr.model.captcha_cracker import CaptchaCracker
 from fontTools.ttLib import TTFont
 import uuid
 
@@ -41,6 +43,125 @@ def list_model_count():
         if not one.startswith(".") and one.endswith(".pth"):
             count += 1
     return count
+
+
+# 监听文件夹的处理方法
+class FileEventHandler(FileSystemEventHandler):
+    def __init__(self):
+        FileSystemEventHandler.__init__(self)
+
+    def on_moved(self, event):
+        if event.is_directory:
+            logger.info(("directory moved from {0} to {1}".format(event.src_path, event.dest_path)))
+        else:
+            logger.info(("file moved from {0} to {1}".format(event.src_path, event.dest_path)))
+
+    def on_created(self, event):
+        if event.is_directory:
+            logger.info(("directory created:{0}".format(event.src_path)))
+        else:
+            logger.info(("file created:{0}".format(event.src_path)))
+            file_name = os.path.split(os.path.realpath(event.src_path))[1]
+            statinfo = os.stat(event.src_path)
+            msize = statinfo.st_size
+            max_wait_loop = 0
+            # 最多等待1个小时 360个10秒为1小时
+            while max_wait_loop < (6 * 10 * 6):
+                time.sleep(10)
+                statinfo = os.stat(event.src_path)
+                if statinfo.st_size - msize == 0:
+                    logger.info('认为新model:{0}传输完成，最终大小{1},30秒后开始加载'.format(file_name, (statinfo.st_size)))
+                    time.sleep(30)
+                    if file_name.startswith("lstm"):
+                        addTheanoModel(file_name)
+                    elif file_name.startswith("crnn"):
+                        addCRNNModel(file_name)
+                    else:
+                        logger.info("文件名称有误，请重新上传：{}".format(file_name))
+                    break
+                msize = statinfo.st_size
+                max_wait_loop = max_wait_loop + 1
+
+    def on_deleted(self, event):
+        if event.is_directory:
+            logger.info(("directory deleted:{0}".format(event.src_path)))
+        else:
+            logger.info(("file deleted:{0}".format(event.src_path)))
+
+    def on_modified(self, event):
+        if event.is_directory:
+            logger.info(("directory modified:{0}".format(event.src_path)))
+        else:
+
+            logger.info(("file modified:{0}".format(event.src_path)))
+
+
+# 加载Model
+def addTheanoModel(one):
+    start_time = time.clock()
+
+    # global model_lock
+    id = ''
+    w = 80
+    h = 150
+    steps = 8
+    version = "1.0"
+    model_data = {}
+
+    try:
+        logger.info("start init cracker:{0}".format(one))
+        if not one.endswith(".npz"):
+            logger.error("{0}不以.npz结尾，不进行初始化".format(one))
+            return
+
+        if one.startswith("rookie"):
+            vs = one.split("_")
+            id = vs[1]
+            w = 150
+            h = 80
+            steps = 8
+            version = "2.0"
+        else:
+            h = one.split("_")[-5]
+            w = one.split("_")[-4]
+            id = one.split("_")[-3]
+            steps = one.split("_")[-2]
+            version = "1.0"
+        logger.info("{0}分类完毕，version:{1},开始初始化".format(one, version))
+        id_cracker = theano_model.captcha_cracker.CaptchaCracker(
+            model_path + one,
+            (None, 1, int(h), int(w)),
+            includeCapital=False,
+            multi_chars=True,
+            rescale_in_preprocessing=False,
+            num_rnn_steps=int(steps),
+            use_mask_input=True)
+        logger.info("{0}分类完毕，version:{1},初始化完毕".format(one, version))
+        model_data = {
+            "id": id,
+            "w": w,
+            "h": h,
+            "steps": steps,
+            "id_cracker": id_cracker,
+            "file_name": one,
+            "version": version,
+            "type": "theano_ocr"
+        }
+        logger.info("{0}分类完毕，开始进行加载".format(one))
+    except Exception, e:
+        logger.error("{0}分类完毕，加载异常了:{1}".format(one, e.message))
+
+    try:
+        # 检测key是否已经存在
+        if cracker_map.has_key(id):
+            logger.info("key {0} 已经存在，文件 {1} 加载失败,解析后数据: {2}".format(id, one, model_data))
+        else:
+            cracker_map[id] = model_data
+    except Exception, e:
+        logger.error("{0}加载发生异常：{1}".format(one, e.message))
+    finally:
+        logger.info("{0}加载结束，释放锁".format(one))
+    logger.info("finish init cracker:{0},spend{1}".format(id, time.clock() - start_time))
 
 
 def addCRNNModel(one):
@@ -81,8 +202,7 @@ def addCRNNModel(one):
 def initModes():
     for one in list_model:
         if one.startswith("lstm"):
-            print '123'
-            # addTheanoModel(one)
+            addTheanoModel(one)
             # t = threading.Thread(target=addTheanoModel, args=(one,))
             # t.start()
         elif one.startswith("crnn"):
@@ -91,6 +211,12 @@ def initModes():
             # t.start()
         else:
             print("格式无法匹配模型theano或者crnn: {}".format(one))
+    # 启动文件夹监听服务
+    global observer
+    event_handler = FileEventHandler()
+    observer.schedule(event_handler, watcher_path, True)
+    observer.start()
+    observer.join()
 
 
 # 处理网络请求
@@ -162,7 +288,10 @@ class GetHandler(BaseHTTPRequestHandler):
                     type = cracker_data["type"]
                     cracker = cracker_data["id_cracker"]
                     if type == "theano_ocr":
-                        print '123'
+                        w = cracker_data["w"]
+                        h = cracker_data["h"]
+                        code = inference.read_and_parse(image_data, cracker, w, h)
+                        result["result"] = code
                     else:
                         image = Image.open(BytesIO(image_data)).convert('L')
                         image = transformer(image)
@@ -297,7 +426,8 @@ sessMap = {}
 #所有graph缓存
 grapMap = {}
 
-
+# 监听服务
+observer = Observer()
 # 启线程加载Model
 threading.Thread(target=initModes).start()
 
@@ -314,4 +444,5 @@ if __name__ == '__main__':
         print(e)
     finally:
         print('final')
+        observer.stop()
         sys.exit()
