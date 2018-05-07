@@ -11,9 +11,7 @@ from io import BytesIO
 from SocketServer import ThreadingMixIn
 import torch
 from PIL import Image
-# tensorflow
 from torch.autograd import Variable
-import tensorShiBie as tensor
 
 sys.path.append("..")
 import crnn_pytorch.dataset as dataset
@@ -182,35 +180,7 @@ class GetHandler(BaseHTTPRequestHandler):
                 except Exception, e:
                     result["msg"] = "识别过程发生异常"
                     result["ex"] = e.message
-        elif '/pyTensorflow' == self.path:
-            images = []
-            content_len = int(self.headers.getheader('content-length'))
-            post_body = self.rfile.read(content_len)
-            data = json.loads(post_body)
-            if (not data.has_key("images")) or data['images'] == "":
-                result["success"] = False
-                result["msg"] = "images不能为空"
-            else:
-                try:
-                    site = data["site"]
-                    imageDataList = data['images']
-                    for image_data in imageDataList:
-                        missing_padding = 4 - len(image_data) % 4
-                        if missing_padding:
-                            image_data += b'=' * missing_padding
-                        imageByte = base64.b64decode(image_data)
-                        img = Image.open(BytesIO(imageByte))
-                        images.append(img)
-                    print 'go into tensorFlow'
-                    resStr = tensor.domain(images, site, sessMap, grapMap)
-                    print 'out of  tensorFlow'
 
-                    result["result"] = resStr
-
-                    result["success"] = True
-                except Exception, e:
-                    result["msg"] = "识别过程发生异常"
-                    result["ex"] = e.message
         elif '/pyfont' == self.path:
             content_len = int(self.headers.getheader('content-length'))
             post_body = self.rfile.read(content_len)
