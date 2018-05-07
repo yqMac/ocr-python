@@ -27,7 +27,7 @@ from rookie_utils.Logger import Logger
 from theano_ocr.model.captcha_cracker import CaptchaCracker
 from fontTools.ttLib import TTFont
 import uuid
-
+import time
 alphabet = '0123456789abcdefghijklmnopqrstuvwxyz'
 converter = utils.strLabelConverter(alphabet)
 transformer = dataset.resizeNormalize((100, 32))
