@@ -1,5 +1,5 @@
 # coding:utf-8
-import tensorShiBie as tensor
+
 import base64
 import json
 import os
@@ -10,8 +10,8 @@ from BaseHTTPServer import HTTPServer
 from io import BytesIO
 from SocketServer import ThreadingMixIn
 import torch
-from PIL import Image
 from torch.autograd import Variable
+from PIL import Image
 
 
 sys.path.append("..")
@@ -24,6 +24,7 @@ from rookie_utils.Logger import Logger
 import  logging
 from fontTools.ttLib import TTFont
 import uuid
+import tensorShiBie as tensor
 
 alphabet = '0123456789abcdefghijklmnopqrstuvwxyz'
 converter = utils.strLabelConverter(alphabet)
