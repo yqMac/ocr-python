@@ -169,7 +169,7 @@ class GetHandler(BaseHTTPRequestHandler):
                         image = image.cuda()
                     image = image.view(1, *image.size())
                     image = Variable(image)
-                    # preds = cracker(image)
+                    preds = cracker(image)
                     # _, preds = preds.max(2)
                     # preds = preds.transpose(1, 0).contiguous().view(-1)
                     # preds_size = Variable(torch.IntTensor([preds.size(0)]))
