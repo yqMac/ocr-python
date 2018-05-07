@@ -1,6 +1,9 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from StringIO import StringIO
+import base64
+import json
 import os
 import sys
 import tensorflow.contrib.slim as slim
@@ -8,7 +11,14 @@ import numpy as np
 import tensorflow as tf
 import pickle
 from PIL import Image
+import logging
 import time
+logger = logging.getLogger('Training a chinese write char recognition')
+logger.setLevel(logging.INFO)
+# formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+ch = logging.StreamHandler()
+ch.setLevel(logging.INFO)
+logger.addHandler(ch)
 
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
@@ -18,10 +28,11 @@ reload(sys)
 sys.setdefaultencoding('utf-8')
 
 
-tf.app.flags.DEFINE_integer('charset_size', 3772, "Choose the first `charset_size` characters only.")
+tf.app.flags.DEFINE_integer('charset_size', 3829, "Choose the first `charset_size` characters only.")
 tf.app.flags.DEFINE_integer('image_size', 64, "Needs to provide same value as in training.")
 tf.app.flags.DEFINE_string('checkpoint_Path', '../chineseImage/', "don't find checkpoint_path.")
 tf.app.flags.DEFINE_string('checkpoint_dir', '', "don't find checkpoint_dir.")
+tf.app.flags.DEFINE_string('log_dir', './log', 'the logging dir')
 FLAGS = tf.app.flags.FLAGS
 
 gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.3)
@@ -31,10 +42,10 @@ gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.3)
 def getParameter(siteId):
     if "40001" == siteId:
         FLAGS.image_size = 64
-        FLAGS.charset_size = 3772
-    else:
-        FLAGS.image_size = 64
-        FLAGS.charset_size = 3772
+        FLAGS.charset_size = 3777
+    # else:
+    #     FLAGS.image_size = 64
+    #     FLAGS.charset_size = 3772
 
 
 
@@ -79,43 +90,42 @@ def build_graph(top_k):
             'predicted_val_top_k': predicted_val_top_k}
 
 
-def inference(images,siteId, checkpoint_dir, sessMap, grapMap):
-    print('inference')
+def inference(image, checkpoint_dir, sessMap, grapMap, siteId):
     image_set = []
-    # 对每张图进行尺寸标准化和归一化
-    for image in images:
-        #temp_image = Image.open(image).convert('L')
-        temp_image = image.convert('L')
-        temp_image = temp_image.resize((FLAGS.image_size, FLAGS.image_size), Image.ANTIALIAS)
-        temp_image = np.asarray(temp_image) / 255.0
-        temp_image = temp_image.reshape([-1, 64, 64, 1])
-        image_set.append(temp_image)
 
     # 使用with as 的方式每次都会关闭TensorFlow的session，使用sess = tf.session 的方式需要手动关闭session，如果不关闭下次可供使用
     # with tf.Session(config=tf.ConfigProto(gpu_options=gpu_options, allow_soft_placement=True)) as sess:
-        sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options, allow_soft_placement=True))
-        ckpt = tf.train.latest_checkpoint(checkpoint_dir)
+    sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options, allow_soft_placement=True))
 
-        if ckpt and not siteId in sessMap.keys() and not siteId in grapMap.keys():
-            graph = build_graph(top_k=3)
-            saver = tf.train.Saver()
-            saver.restore(sess, ckpt)
-            sessMap[siteId] = sess
-            grapMap[siteId] = graph
-        else:
-            sess = sessMap.get(siteId)
-            graph = grapMap.get(siteId)
-        val_list = []
-        idx_list = []
-        # 预测每一张图
-        for item in image_set:
-            temp_image = item
-            predict_val, predict_index = sess.run([graph['predicted_val_top_k'], graph['predicted_index_top_k']],
+    ckpt = tf.train.latest_checkpoint(checkpoint_dir)
+    # 对每张图进行尺寸标准化和归一化
+    temp_image = image.convert('L')
+    temp_image = temp_image.resize((FLAGS.image_size, FLAGS.image_size), Image.ANTIALIAS)
+    temp_image = np.asarray(temp_image) / 255.0
+    temp_image = temp_image.reshape([-1, 64, 64, 1])
+    image_set.append(temp_image)
+
+    if ckpt and not siteId in sessMap.keys() and not siteId in grapMap.keys():
+        graph = build_graph(top_k=1)
+        saver = tf.train.Saver()
+        saver.restore(sess, ckpt)
+        sessMap[siteId] = sess
+        grapMap[siteId] = graph
+    else:
+        sess = sessMap.get(siteId)
+        graph = grapMap.get(siteId)
+    val_list = []
+    idx_list = []
+    # 预测每一张图
+
+    for item in image_set:
+        temp_image = item
+        predict_val, predict_index = sess.run([graph['predicted_val_top_k'], graph['predicted_index_top_k']],
                                                     feed_dict={graph['images']: temp_image,
                                                             graph['keep_prob']: 1.0,
                                                             graph['is_training']: False})
-            val_list.append(predict_val)
-            idx_list.append(predict_index)
+        val_list.append(predict_val)
+        idx_list.append(predict_index)
     return val_list, idx_list
 
 
@@ -175,53 +185,90 @@ def erzhihua(img, rgb):
     return img
 
 
+#检测是否是白块
+def isWhite(img):
+    img = img.convert("RGB")
+    pixdata = img.load()
+    num = img.size[0] * img.size[1]
+    count = 0
+    for y in xrange(img.size[1]):
+        for x in xrange(img.size[0]):
+            if pixdata[x, y][0] + pixdata[x, y][1] + pixdata[x, y][2] > 200*3:
+                count = count + 1
+
+    if(num <= count+1):
+        return True
+    return False
+
+
 def main(images, siteId, sessMap, grapMap):
-    imageList = []
+    final_reco_text = []  # 存储最后识别出来的文字串
     #获取checkpoint的路径
     checkpoint_dir = FLAGS.checkpoint_Path+"checkpoint/checkpoint"+siteId+"/"
     label_dir = FLAGS.checkpoint_Path+"chineseLabels/chineseLabels"+siteId
     label_dict = get_label_dict(label_dir)
     #把要识别的图片标准化
     for image in images:
-        img = ImageChangeSize(image, 64, 64, 2)
-        imageList.append(img)
-    final_predict_val, final_predict_index = inference(imageList,siteId, checkpoint_dir, sessMap, grapMap)
-    final_reco_text = []  # 存储最后识别出来的文字串
-    # 给出top 3预测，candidate1是概率最高的预测
-    for i in range(len(final_predict_val)):
-        candidate1 = final_predict_index[i][0][0]
-        #candidate2 = final_predict_index[i][0][1]
-        #candidate3 = final_predict_index[i][0][2]
-        final_reco_text.append(label_dict[int(candidate1)])
-    print ('=====================OCR RESULT=======================\n')
-    # 打印出所有识别出来的结果（取top 1）
-    #for i in range(len(final_reco_text)):
-     #   print final_reco_text[i],
-
-
+        if(not isWhite(image)):
+            img = ImageChangeSize(image, 64, 64, 2)
+            # imageList.append(img)
+            final_predict_val, final_predict_index = inference(img, checkpoint_dir, sessMap, grapMap, siteId)
+            # 给出top 3预测，candidate1是概率最高的预测
+            for i in range(len(final_predict_val)):
+                candidate1 = final_predict_index[i][0][0]
+                #candidate2 = final_predict_index[i][0][1]
+                #candidate3 = final_predict_index[i][0][2]
+                final_reco_text.append(label_dict[int(candidate1)])
+        else:
+            final_reco_text.append(" ")
     return final_reco_text
 
 
 def domain(images, siteId, sessMap, grapMap):
+    logger.info('==================tensorFlow Start================')
+    start = time.time();
+    getParameter(siteId)
     text = main(images, siteId, sessMap, grapMap)
     result = ""
     for i in range(len(text)):
         result = result + text[i]
+    logger.info(time.time() - start)
+    logger.info('结果: '+result)
+    logger.info('==================tensorFlow Finished================')
     return result
 
 
 if __name__ == "__main__":
+    # images = []
+    # post_body = "{\"site\":\"40001\",\"images\":\"iVBORw0KGgoAAAANSUhEUgAAACYAAAAkCAYAAADl9UilAAAAvUlEQVR42u2YSw6AIAxEe/9LY1yQGBFsmRnACEk3RMujHwq1VBlmlljj1JXF/Q9b4X/Brso+Ddb6VgaGWmWDbbB7oHsksvASYKg0XRm1zPJgSLzSwSKLwlnZ60YpGNtaGyzPswp8GOxN+VAwT1lhlysIrDU/5IBl1EI5WE/2SVwZLdxT7vzLgrFfSnKwKTGmdKn0zo/AyYIfjTkJGGUR9u2iBqY48Qth9SskYL2Zx2zuPWzWqC0nGqD3CTZ6HODFGcgijBFfAAAAAElFTkSuQmCC  \"}"
+    # data = json.loads(post_body)
+    # print ("data json:{0}".format(data))
+    # site = data["site"]
+    # image_datas = data['images']
+    #
+    # str = image_datas
+    # strArr = str.split()
+    # for str in strArr:
+    #     missing_padding = 4 - len(str) % 4
+    #     if missing_padding:
+    #         str += b'=' * missing_padding
+    #     imageByte = base64.b64decode(str)
+    #     img = Image.open(StringIO(imageByte))
+    #     for i in range(1):
+    #         images.append(img)
+    # sessMap = {}
+    # grapMap = {}
+    # domain(images, site, sessMap, grapMap)
+
+
     sessMap = {}
     grapMap = {}
     siteId = "40001"
-    filename = "/Users/shangzhen/Desktop/jbxx/11.png"
-
+    filename = "/Users/shangzhen/PycharmProjects/CPS-OCR-Engine-master/ocr/tmp/43AAA5FAE3DFD76611F5105872A0E474.png"
     for i in range(2):
         time1 = time.time()
         img = Image.open(filename)
-
         getParameter(siteId)
-
         #传图片,返回的是list集合
         imgList = []
         imgList.append(img)
