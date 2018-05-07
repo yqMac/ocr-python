@@ -21,7 +21,7 @@ import crnn_pytorch.utils as utils
 from rookie_utils import mod_config
 from rookie_utils.Logger import Logger
 import  logging
-
+from fontTools.ttLib import TTFont
 import uuid
 
 alphabet = '0123456789abcdefghijklmnopqrstuvwxyz'
@@ -180,42 +180,42 @@ class GetHandler(BaseHTTPRequestHandler):
                 except Exception, e:
                     result["msg"] = "识别过程发生异常"
                     result["ex"] = e.message
-        # elif '/pyfont' == self.path:
-        #     content_len = int(self.headers.getheader('content-length'))
-        #     post_body = self.rfile.read(content_len)
-        #     data = json.loads(post_body)
-        #     logger.info("data json:{0}".format(data))
-        #     if (not data.has_key("font")) or data['font'] == "":
-        #         result["success"] = False
-        #         result["msg"] = "font"
-        #     elif not data.has_key("uuid"):
-        #         result["msg"] = "uuid"
-        #     else:
-        #         try:
-        #             site = data["uuid"]
-        #             if '' == site:
-        #                 site = uuid.uuid1()
-        #             image_data = data['font']
-        #             missing_padding = 4 - len(image_data) % 4
-        #             if missing_padding:
-        #                 image_data += b'=' * missing_padding
-        #             image_data = base64.b64decode(image_data)
-        #             f = open(font_path + site + ".woff", 'w')
-        #
-        #             f.write(image_data)
-        #             f.close()
-        #             font = TTFont(font_path + site + ".woff")
-        #             font.saveXML(font_path + site + ".xml")
-        #             fontXML = open(font_path + site + ".xml")
-        #             fontXMLData = fontXML.read()
-        #             fontXML.close()
-        #             resData = base64.encodestring(fontXMLData)
-        #             result["result"] = resData
-        #             result["success"] = True
-        #         except Exception:
-        #             logger.info("pyfont 异常:{0}".format(Exception.message))
-        #             result["msg"] = "识别过程发生异常"
-        #             result["ex"] = Exception.message
+        elif '/pyfont' == self.path:
+            content_len = int(self.headers.getheader('content-length'))
+            post_body = self.rfile.read(content_len)
+            data = json.loads(post_body)
+            logger.info("data json:{0}".format(data))
+            if (not data.has_key("font")) or data['font'] == "":
+                result["success"] = False
+                result["msg"] = "font"
+            elif not data.has_key("uuid"):
+                result["msg"] = "uuid"
+            else:
+                try:
+                    site = data["uuid"]
+                    if '' == site:
+                        site = uuid.uuid1()
+                    image_data = data['font']
+                    missing_padding = 4 - len(image_data) % 4
+                    if missing_padding:
+                        image_data += b'=' * missing_padding
+                    image_data = base64.b64decode(image_data)
+                    f = open(font_path + site + ".woff", 'w')
+
+                    f.write(image_data)
+                    f.close()
+                    font = TTFont(font_path + site + ".woff")
+                    font.saveXML(font_path + site + ".xml")
+                    fontXML = open(font_path + site + ".xml")
+                    fontXMLData = fontXML.read()
+                    fontXML.close()
+                    resData = base64.encodestring(fontXMLData)
+                    result["result"] = resData
+                    result["success"] = True
+                except Exception:
+                    logger.info("pyfont 异常:{0}".format(Exception.message))
+                    result["msg"] = "识别过程发生异常"
+                    result["ex"] = Exception.message
         else:
             result["msg"] = "不支持的请求地址"
         json_string = json.dumps(result)
