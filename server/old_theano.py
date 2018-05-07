@@ -46,57 +46,6 @@ def list_model_count():
     return count
 
 
-# 监听文件夹的处理方法
-class FileEventHandler(FileSystemEventHandler):
-    def __init__(self):
-        FileSystemEventHandler.__init__(self)
-
-    def on_moved(self, event):
-        if event.is_directory:
-            logger.info(("directory moved from {0} to {1}".format(event.src_path, event.dest_path)))
-        else:
-            logger.info(("file moved from {0} to {1}".format(event.src_path, event.dest_path)))
-
-    def on_created(self, event):
-        if event.is_directory:
-            logger.info(("directory created:{0}".format(event.src_path)))
-        else:
-            logger.info(("file created:{0}".format(event.src_path)))
-            file_name = os.path.split(os.path.realpath(event.src_path))[1]
-            statinfo = os.stat(event.src_path)
-            msize = statinfo.st_size
-            max_wait_loop = 0
-            # 最多等待1个小时 360个10秒为1小时
-            while max_wait_loop < (6 * 10 * 6):
-                time.sleep(10)
-                statinfo = os.stat(event.src_path)
-                if statinfo.st_size - msize == 0:
-                    logger.info('认为新model:{0}传输完成，最终大小{1},30秒后开始加载'.format(file_name, (statinfo.st_size)))
-                    time.sleep(30)
-                    if file_name.startswith("lstm"):
-                        addTheanoModel(file_name)
-                    elif file_name.startswith("crnn"):
-                        addCRNNModel(file_name)
-                    else:
-                        logger.info("文件名称有误，请重新上传：{}".format(file_name))
-                    break
-                msize = statinfo.st_size
-                max_wait_loop = max_wait_loop + 1
-
-    def on_deleted(self, event):
-        if event.is_directory:
-            logger.info(("directory deleted:{0}".format(event.src_path)))
-        else:
-            logger.info(("file deleted:{0}".format(event.src_path)))
-
-    def on_modified(self, event):
-        if event.is_directory:
-            logger.info(("directory modified:{0}".format(event.src_path)))
-        else:
-
-            logger.info(("file modified:{0}".format(event.src_path)))
-
-
 # 加载Model
 def addTheanoModel(one):
     start_time = time.clock()
@@ -212,12 +161,7 @@ def initModes():
             # t.start()
         else:
             print("格式无法匹配模型theano或者crnn: {}".format(one))
-    # 启动文件夹监听服务
-    global observer
-    event_handler = FileEventHandler()
-    observer.schedule(event_handler, watcher_path, True)
-    observer.start()
-    observer.join()
+
 
 
 # 处理网络请求
@@ -428,7 +372,6 @@ sessMap = {}
 grapMap = {}
 
 # 监听服务
-observer = Observer()
 # 启线程加载Model
 threading.Thread(target=initModes).start()
 
@@ -445,5 +388,5 @@ if __name__ == '__main__':
         print(e)
     finally:
         print('final')
-        observer.stop()
+
         sys.exit()
