@@ -169,12 +169,12 @@ class GetHandler(BaseHTTPRequestHandler):
                         image = image.cuda()
                     image = image.view(1, *image.size())
                     image = Variable(image)
-                    preds = cracker(image)
-                    _, preds = preds.max(2)
-                    preds = preds.transpose(1, 0).contiguous().view(-1)
-                    preds_size = Variable(torch.IntTensor([preds.size(0)]))
-                    sim_pred = converter.decode(preds.data, preds_size.data, raw=False)
-                    result["result"] = sim_pred
+                    # preds = cracker(image)
+                    # _, preds = preds.max(2)
+                    # preds = preds.transpose(1, 0).contiguous().view(-1)
+                    # preds_size = Variable(torch.IntTensor([preds.size(0)]))
+                    # sim_pred = converter.decode(preds.data, preds_size.data, raw=False)
+                    # result["result"] = sim_pred
                     result["success"] = True
                 except Exception, e:
                     result["msg"] = "识别过程发生异常"
