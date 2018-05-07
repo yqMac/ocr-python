@@ -250,6 +250,11 @@ class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
 mod_config.setPath(".")
 # 项目目录
 project_path = mod_config.getConfig("project", "path")
+if project_path is None or project_path == '':
+    # server_path = os.getcwd()
+    server_path = os.path.split(os.path.realpath(__file__))[0]
+    project_path = os.path.dirname(server_path)
+
 # 日志输出
 log_path = project_path + mod_config.getConfig("logger", "file")
 logger = Logger(log_path, logging.INFO, logging.INFO)
