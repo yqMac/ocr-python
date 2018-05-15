@@ -7,7 +7,7 @@ import sys
 import threading
 from BaseHTTPServer import BaseHTTPRequestHandler
 from BaseHTTPServer import HTTPServer
-from io import BytesIO, StringIO
+from io import BytesIO
 from SocketServer import ThreadingMixIn
 import torch
 from PIL import Image
@@ -48,12 +48,16 @@ class FileEventHandler(FileSystemEventHandler):
 
     def on_moved(self, event):
         print '1'
+
     def on_created(self, event):
         print '2'
+
     def on_deleted(self, event):
         print '3'
+
     def on_modified(self, event):
         print '4'
+
 
 def addCRNNModel(one):
     try:
@@ -164,7 +168,7 @@ class GetHandler(BaseHTTPRequestHandler):
             content_len = int(self.headers.getheader('content-length'))
             post_body = self.rfile.read(content_len)
             data = json.loads(post_body)
-            logger.info("data json:{0}".format(data))
+
             if (not data.has_key("image")) or data['image'] == "":
                 result["success"] = False
                 result["msg"] = "image不能为空"
@@ -173,8 +177,9 @@ class GetHandler(BaseHTTPRequestHandler):
             elif not data.has_key("site"):
                 result["msg"] = "site不能为空"
             else:
+                start = time.time()
+                site = data["site"]
                 try:
-                    site = data["site"]
                     cracker_data = cracker_map[site]
                     image_data = data['image']
                     missing_padding = 4 - len(image_data) % 4
@@ -200,6 +205,11 @@ class GetHandler(BaseHTTPRequestHandler):
                 except Exception, e:
                     result["msg"] = "识别过程发生异常"
                     result["ex"] = e.message
+                finally:
+                    logger.info("path:" + self.path +
+                                " ,siteId: " + str(site) + " ,result:" + json.dumps(result) + " ,spend:" + str(
+                        time.time() - start))
+
         elif '/pyTensorflow' == self.path:
             images = []
             content_len = int(self.headers.getheader('content-length'))

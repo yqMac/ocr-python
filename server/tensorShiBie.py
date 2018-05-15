@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
-
+import logging
 from StringIO import StringIO
 import base64
 import json
@@ -11,22 +11,18 @@ import numpy as np
 import tensorflow as tf
 import pickle
 from PIL import Image
-import logging
-import time
-logger = logging.getLogger('Training a chinese write char recognition')
-logger.setLevel(logging.INFO)
-# formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-ch = logging.StreamHandler()
-ch.setLevel(logging.INFO)
-logger.addHandler(ch)
+from rookie_utils.Logger import Logger
 
+import time
+import datetime
+
+logger = Logger("../logs/tensorlog.log", logging.INFO, logging.INFO)
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 reload(sys)
 
 sys.setdefaultencoding('utf-8')
-
 
 tf.app.flags.DEFINE_integer('charset_size', 3829, "Choose the first `charset_size` characters only.")
 tf.app.flags.DEFINE_integer('image_size', 64, "Needs to provide same value as in training.")
@@ -37,7 +33,8 @@ FLAGS = tf.app.flags.FLAGS
 
 gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.3)
 
-#根据siteID 分别赋不同的值
+
+# 根据siteID 分别赋不同的值
 
 def getParameter(siteId):
     if "40001" == siteId:
@@ -46,7 +43,6 @@ def getParameter(siteId):
     # else:
     #     FLAGS.image_size = 64
     #     FLAGS.charset_size = 3772
-
 
 
 def build_graph(top_k):
@@ -121,9 +117,9 @@ def inference(image, checkpoint_dir, sessMap, grapMap, siteId):
     for item in image_set:
         temp_image = item
         predict_val, predict_index = sess.run([graph['predicted_val_top_k'], graph['predicted_index_top_k']],
-                                                    feed_dict={graph['images']: temp_image,
-                                                            graph['keep_prob']: 1.0,
-                                                            graph['is_training']: False})
+                                              feed_dict={graph['images']: temp_image,
+                                                         graph['keep_prob']: 1.0,
+                                                         graph['is_training']: False})
         val_list.append(predict_val)
         idx_list.append(predict_index)
     return val_list, idx_list
@@ -136,56 +132,59 @@ def get_label_dict(label_dir):
     f.close()
     return label_dict
 
-#把图片缩放成指定大小正方形图片
+
+# 把图片缩放成指定大小正方形图片
 def ImageChangeSize(image, width, height, marginSize):
     image = erzhihua(image, 150)
     image = addBorder(image, marginSize)
-    #image.save("/Users/shangzhen/Desktop/jbxx/jbxx2" + str(j) + "_" + str(z) + ".png")
+    # image.save("/Users/shangzhen/Desktop/jbxx/jbxx2" + str(j) + "_" + str(z) + ".png")
     image = suofangImage(image, width, height)
-    #image.save("/Users/shangzhen/Desktop/jbxx/jbxx2" + str(j) + "_" + str(z) + ".png")
+    # image.save("/Users/shangzhen/Desktop/jbxx/jbxx2" + str(j) + "_" + str(z) + ".png")
     return image
 
-#增加边框
+
+# 增加边框
 def addBorder(img, length):
     x = img.size[0]
     y = img.size[1]
-    #创建长宽为length的黑色图片，
-    newImage = Image.new("RGB", (x+length, y+length), (0, 0, 0))
-    #newImage.save("/Users/shangzhen/Desktop/jbxx/jbxx2000.png")
+    # 创建长宽为length的黑色图片，
+    newImage = Image.new("RGB", (x + length, y + length), (0, 0, 0))
+    # newImage.save("/Users/shangzhen/Desktop/jbxx/jbxx2000.png")
     img = img.convert("RGB")
     pixImg = img.load()
     newImage = newImage.convert("RGB")
     pixNewImage = newImage.load()
     # pixdata[x, y] = (255, 255, 255) 给图片指定像素图上颜色
-    jiakuan = length/2
+    jiakuan = length / 2
     for i in range(y):
         for j in range(x):
-            pixNewImage[j+jiakuan,i+jiakuan] = (pixImg[j,i][0], pixImg[j,i][1], pixImg[j,i][2])
+            pixNewImage[j + jiakuan, i + jiakuan] = (pixImg[j, i][0], pixImg[j, i][1], pixImg[j, i][2])
     return newImage
 
 
-#缩放图片到指定大小
-def suofangImage(img,length,width):
-    imga = img.resize((length,width))
+# 缩放图片到指定大小
+def suofangImage(img, length, width):
+    imga = img.resize((length, width))
     return imga
 
-#二值化
+
+# 二值化
 def erzhihua(img, rgb):
-    #img = Image.open(filename)
-    #img = img.convert("RGBA")
+    # img = Image.open(filename)
+    # img = img.convert("RGBA")
     img = img.convert("RGB")
     pixdata = img.load()
 
     for y in xrange(img.size[1]):
         for x in xrange(img.size[0]):
-            if pixdata[x, y][0] + pixdata[x, y][1] + pixdata[x, y][2] > rgb*3:
+            if pixdata[x, y][0] + pixdata[x, y][1] + pixdata[x, y][2] > rgb * 3:
                 pixdata[x, y] = (0, 0, 0)
             else:
                 pixdata[x, y] = (255, 255, 255)
     return img
 
 
-#检测是否是白块
+# 检测是否是白块
 def isWhite(img):
     img = img.convert("RGB")
     pixdata = img.load()
@@ -193,31 +192,31 @@ def isWhite(img):
     count = 0
     for y in xrange(img.size[1]):
         for x in xrange(img.size[0]):
-            if pixdata[x, y][0] + pixdata[x, y][1] + pixdata[x, y][2] > 200*3:
+            if pixdata[x, y][0] + pixdata[x, y][1] + pixdata[x, y][2] > 200 * 3:
                 count = count + 1
 
-    if(num <= count+1):
+    if (num <= count + 1):
         return True
     return False
 
 
 def main(images, siteId, sessMap, grapMap):
     final_reco_text = []  # 存储最后识别出来的文字串
-    #获取checkpoint的路径
-    checkpoint_dir = FLAGS.checkpoint_Path+"checkpoint/checkpoint"+siteId+"/"
-    label_dir = FLAGS.checkpoint_Path+"chineseLabels/chineseLabels"+siteId
+    # 获取checkpoint的路径
+    checkpoint_dir = FLAGS.checkpoint_Path + "checkpoint/checkpoint" + siteId + "/"
+    label_dir = FLAGS.checkpoint_Path + "chineseLabels/chineseLabels" + siteId
     label_dict = get_label_dict(label_dir)
-    #把要识别的图片标准化
+    # 把要识别的图片标准化
     for image in images:
-        if(not isWhite(image)):
+        if (not isWhite(image)):
             img = ImageChangeSize(image, 64, 64, 2)
             # imageList.append(img)
             final_predict_val, final_predict_index = inference(img, checkpoint_dir, sessMap, grapMap, siteId)
             # 给出top 3预测，candidate1是概率最高的预测
             for i in range(len(final_predict_val)):
                 candidate1 = final_predict_index[i][0][0]
-                #candidate2 = final_predict_index[i][0][1]
-                #candidate3 = final_predict_index[i][0][2]
+                # candidate2 = final_predict_index[i][0][1]
+                # candidate3 = final_predict_index[i][0][2]
                 final_reco_text.append(label_dict[int(candidate1)])
         else:
             final_reco_text.append(" ")
@@ -225,16 +224,15 @@ def main(images, siteId, sessMap, grapMap):
 
 
 def domain(images, siteId, sessMap, grapMap):
-    logger.info('==================tensorFlow Start================')
     start = time.time();
     getParameter(siteId)
     text = main(images, siteId, sessMap, grapMap)
     result = ""
     for i in range(len(text)):
         result = result + text[i]
-    logger.info(time.time() - start)
-    logger.info('结果: '+result)
-    logger.info('==================tensorFlow Finished================')
+
+    logger.info("siteId: " + str(siteId) + "===" + "共" + str(len(images)) + "个图片" + "===" + '返回' + str(len(result)) + "个字符==='用时'"+str(time.time() - start)+'结果: ' + result)
+
     return result
 
 
@@ -249,7 +247,7 @@ if __name__ == "__main__":
     # str = image_datas
     # strArr = str.split()
     # for str in strArr:
-    #     missing_padding = 4 - len(str) % 4
+    #     missing_padding = 4 - len(str) %Reloader 4
     #     if missing_padding:
     #         str += b'=' * missing_padding
     #     imageByte = base64.b64decode(str)
@@ -260,16 +258,15 @@ if __name__ == "__main__":
     # grapMap = {}
     # domain(images, site, sessMap, grapMap)
 
-
     sessMap = {}
     grapMap = {}
     siteId = "40001"
-    filename = "/Users/shangzhen/PycharmProjects/CPS-OCR-Engine-master/ocr/tmp/43AAA5FAE3DFD76611F5105872A0E474.png"
+    filename = "/Users/shangzhen/PycharmProjects/CPS-OCR-Engine-master/ocr/tmp/796DF74A1107FE3995622D3299665E19.png"
     for i in range(2):
         time1 = time.time()
         img = Image.open(filename)
         getParameter(siteId)
-        #传图片,返回的是list集合
+        # 传图片,返回的是list集合
         imgList = []
         imgList.append(img)
 
