@@ -14,7 +14,6 @@ import numpy as np
 
 
 class lmdbDataset(Dataset):
-
     def __init__(self, root=None, transform=None, target_transform=None):
         self.env = lmdb.open(
             root,
@@ -66,8 +65,49 @@ class lmdbDataset(Dataset):
         return (img, label)
 
 
-class resizeNormalize(object):
+# read lmdb2 data then write into lmdb1
+def merge_lmdb(result_lmdb, lmdb2):
+    print 'Merge start!'
 
+    # env代表Environment, txn代表Transaction
+
+    # 打开lmdb文件，读模式
+    env_2 = lmdb.open(lmdb2)
+
+    # 创建事务
+    txn_2 = env_2.begin()
+
+    # 打开数据库
+    database_2 = txn_2.cursor()
+
+    # 打开lmdb文件，写模式，
+    env_3 = lmdb.open(result_lmdb, map_size=int(1e12))
+    txn_3 = env_3.begin(write=True)
+
+    count = 0
+    # 遍历数据库
+    for (key, value) in database_2:
+        txn_3.put(key, value)
+        if (count % 1000 == 0):
+            txn_3.commit()
+            count = 0
+            txn_3 = env_3.begin(write=True)
+
+    if (count % 1000 != 0):
+        txn_3.commit()
+        count = 0
+        txn_3 = env_3.begin(write=True)
+
+    # 关闭lmdb
+    env_2.close()
+    env_3.close()
+
+    print 'Merge success!'
+    # 输出结果lmdb的状态信息，可以看到数据是否合并成功
+    print env_3.stat()
+
+
+class resizeNormalize(object):
     def __init__(self, size, interpolation=Image.BILINEAR):
         self.size = size
         self.interpolation = interpolation
@@ -81,7 +121,6 @@ class resizeNormalize(object):
 
 
 class randomSequentialSampler(sampler.Sampler):
-
     def __init__(self, data_source, batch_size):
         self.num_samples = len(data_source)
         self.batch_size = batch_size
@@ -107,7 +146,6 @@ class randomSequentialSampler(sampler.Sampler):
 
 
 class alignCollate(object):
-
     def __init__(self, imgH=32, imgW=100, keep_ratio=False, min_ratio=1):
         self.imgH = imgH
         self.imgW = imgW
