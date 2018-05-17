@@ -92,28 +92,31 @@ if dataset_dir is None:
 # 初始化加载 训练数据集
 def initTrainDataLoader():
     # 创建一个临时统一的数据库
-    print("开始创建临时数据库，存储所有的训练数据")
     tmpTrainLmdb = "tmpLmdb"
     if not os.path.exists(tmpTrainLmdb):
         os.mkdir(tmpTrainLmdb)
-    if os.path.exists(tmpTrainLmdb):
-        ds = os.listdir(tmpTrainLmdb)
-        for d in ds:
-            os.remove(tmpTrainLmdb + "/" + d)
-            print("临时数据库已经存在，删除重建：{}".format(tmpTrainLmdb + "/" + d))
-    # 开始遍历所有已存在的数据库，写入临时数据库
-    trains_dir = dataset_dir
-    fs = os.listdir(trains_dir)
-    index = 0
-    list_name = []
-    for one in fs:
-        # if not one.endswith(".mdb"):
-        #     continue
-        root_path = trains_dir + "/" + one + "/train"
-        if not os.path.exists(root_path):
-            continue
-        print("读取训练数据集:{},写入临时数据库".format(root_path))
-        dataset.merge_lmdb(tmpTrainLmdb, root_path)
+
+    if not os.path.exists(tmpTrainLmdb + "/data.mdb"):
+        print("临时数据库不存在,开始创建临时数据库,存储所有的训练数据")
+        if os.path.exists(tmpTrainLmdb):
+            ds = os.listdir(tmpTrainLmdb)
+            for d in ds:
+                os.remove(tmpTrainLmdb + "/" + d)
+                print("临时数据库已经存在，删除重建：{}".format(tmpTrainLmdb + "/" + d))
+        # 开始遍历所有已存在的数据库，写入临时数据库
+        trains_dir = dataset_dir
+        fs = os.listdir(trains_dir)
+        count = len(fs)
+        index = 0
+        for one in fs:
+            index += 1
+            root_path = trains_dir + "/" + one + "/train"
+            if not os.path.exists(root_path):
+                continue
+            print("读取训练数据集:{},写入临时数据库:{}/{}".format(root_path, index, count))
+            dataset.merge_lmdb(tmpTrainLmdb, root_path)
+    else:
+        print("临时数据库存在,直接将已有数据作为全部数据,如果需要变更,请删除再运行")
 
     print("开始加载临时数据库中的全部数据")
     train_dataset = dataset.lmdbDataset(root=tmpTrainLmdb)
