@@ -73,9 +73,10 @@ def merge_lmdb(result_lmdb, lmdb2):
 
     # 打开lmdb文件，读模式
     env_2 = lmdb.open(lmdb2)
-
     # 创建事务
     txn_2 = env_2.begin()
+
+    count_2 = txn_2.get('num-samples')
 
     # 打开数据库
     database_2 = txn_2.cursor()
@@ -83,7 +84,9 @@ def merge_lmdb(result_lmdb, lmdb2):
     # 打开lmdb文件，写模式，
     env_3 = lmdb.open(result_lmdb, map_size=int(1e12))
     txn_3 = env_3.begin(write=True)
+    count_3 = txn_3.get('num-samples')
 
+    count_total = long(count_2) + long(count_3)
     count = 0
     # 遍历数据库
     for (key, value) in database_2:
@@ -98,13 +101,14 @@ def merge_lmdb(result_lmdb, lmdb2):
         txn_3.commit()
         txn_3 = env_3.begin(write=True)
 
+    # 更新大小
+    txn_3.put("num-samples", str(count_total))
     # 输出结果lmdb的状态信息，可以看到数据是否合并成功
     print env_3.stat()
     # 关闭lmdb
     env_2.close()
     env_3.close()
     print 'Merge success! count: {}'.format(count)
-
 
 
 class resizeNormalize(object):
