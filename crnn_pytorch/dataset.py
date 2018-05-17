@@ -3,6 +3,7 @@
 
 from __future__ import print_function
 from __future__ import print_function
+from __future__ import print_function
 import random
 import torch
 from torch.utils.data import Dataset
@@ -69,10 +70,8 @@ class lmdbDataset(Dataset):
 
 # read lmdb2 data then write into lmdb1
 def merge_lmdb(result_lmdb, lmdb2):
-    print 'Merge start!'
-
     # env代表Environment, txn代表Transaction
-
+    print('Merge start!')
     # 打开lmdb文件，读模式
     env_2 = lmdb.open(lmdb2)
     # 创建事务
