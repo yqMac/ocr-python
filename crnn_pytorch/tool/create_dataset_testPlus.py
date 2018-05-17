@@ -127,7 +127,10 @@ if __name__ == '__main__':
         raise Exception('imagePath and iamgeDirPath must not to be both blank')
     if opt.imageDirPath is not None and opt.imageDirPath != '':
         fs = glob(opt.imageDirPath + "/*")
+        index = 0
+        count = len(fs)
         for file in fs:
+            index += 1
             if not os.path.isdir(file):
                 print ("不是文件夹,跳过{}".format(file))
                 continue
@@ -137,7 +140,7 @@ if __name__ == '__main__':
                 path += "/success"
 
             paths = glob(path + "/*.*")
-            print("初始化加载:dir:{},flag:{}".format(path, head))
+            print("初始化加载:dir:{},flag:{},step:{}/{}".format(path, head, index, count))
             random.shuffle(paths)
             createDataset(opt.lmdbPath, paths, head)
     else:
