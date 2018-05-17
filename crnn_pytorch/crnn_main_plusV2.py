@@ -59,6 +59,9 @@ print(opt)
 4、程序会读取生成结果目录( 默认expr )下的网络，重新加载，继续训练
 5、workers 指定程序训练过程中生成的进程数，越多占用资源越多
 '''
+import sys
+# 由于样本可能太大，所以设置最大递归深度为1亿
+sys.setrecursionlimit(1000000000)
 
 # 训练结果存储目录
 if opt.experiment is None:
