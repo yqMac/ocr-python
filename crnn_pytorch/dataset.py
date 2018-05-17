@@ -91,10 +91,19 @@ def merge_lmdb(result_lmdb, lmdb2):
     count = 0
     # 遍历数据库
     for (key, value) in database_2:
-        txn_3.put(key, value)
+        new_key = str(key)
+        if new_key.startswith("image-"):
+            new_key = new_key.replace("image-", "")
+            new_key = "image-%09d" % (count_3 + int(new_key))
+        elif new_key.startswith("label-"):
+            new_key = new_key.replace("label-", "")
+            new_key = "label-%09d" % (count_3 + int(new_key))
+        else:
+            continue
+        txn_3.put(new_key, value)
         count += 1
         if count % 1000 == 0:
-            print ("Merge: {}".format(count))
+            print("Merge: {}".format(count))
             txn_3.commit()
             txn_3 = env_3.begin(write=True)
 
