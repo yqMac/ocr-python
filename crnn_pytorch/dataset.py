@@ -89,6 +89,7 @@ def merge_lmdb(result_lmdb, lmdb2):
     for (key, value) in database_2:
         txn_3.put(key, value)
         if (count % 1000 == 0):
+            print ("Merge: {}".format(count))
             txn_3.commit()
             count = 0
             txn_3 = env_3.begin(write=True)
@@ -102,7 +103,7 @@ def merge_lmdb(result_lmdb, lmdb2):
     env_2.close()
     env_3.close()
 
-    print 'Merge success!'
+    print 'Merge success! count: {}'.format(count)
     # 输出结果lmdb的状态信息，可以看到数据是否合并成功
     print env_3.stat()
 
