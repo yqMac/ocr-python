@@ -98,13 +98,13 @@ def merge_lmdb(result_lmdb, lmdb2):
         txn_3.commit()
         txn_3 = env_3.begin(write=True)
 
+    # 输出结果lmdb的状态信息，可以看到数据是否合并成功
+    print env_3.stat()
     # 关闭lmdb
     env_2.close()
     env_3.close()
-
     print 'Merge success! count: {}'.format(count)
-    # 输出结果lmdb的状态信息，可以看到数据是否合并成功
-    print env_3.stat()
+
 
 
 class resizeNormalize(object):
