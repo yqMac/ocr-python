@@ -51,8 +51,6 @@ parser.add_argument('--random_sample', action='store_true', help='whether to sam
 opt = parser.parse_args()
 print(opt)
 
-
-
 '''
 训练流程：
 1、将create_dataset 生成的lmdb数据库放在datasets目录下的自己文件夹下
@@ -61,8 +59,6 @@ print(opt)
 4、程序会读取生成结果目录( 默认expr )下的网络，重新加载，继续训练
 5、workers 指定程序训练过程中生成的进程数，越多占用资源越多
 '''
-
-
 
 # 训练结果存储目录
 if opt.experiment is None:
@@ -97,12 +93,12 @@ if dataset_dir is None:
 def initTrainDataLoader():
     # 创建一个临时统一的数据库
     print("开始创建临时数据库，存储所有的训练数据")
-    tmpTrainLmdb = "tmpLmdb/data.lmdb"
-    if not os.path.exists("tmpLmdb"):
-        os.mkdir("tmpLmdb")
+    tmpTrainLmdb = "tmpLmdb"
     if os.path.exists(tmpTrainLmdb):
         print("临时数据库已经存在，删除重建：{}".format(tmpTrainLmdb))
         os.remove(tmpTrainLmdb)
+    if not os.path.exists(tmpTrainLmdb):
+        os.mkdir(tmpTrainLmdb)
     # 开始遍历所有已存在的数据库，写入临时数据库
     trains_dir = dataset_dir
     fs = os.listdir(trains_dir)
@@ -375,7 +371,8 @@ for epoch in range(opt.niter):
 
         # 多少次batch显示一次进度
         if i % opt.displayInterval == 0:
-            print('epoch: [%-5d/%d],step: [%-4d/%d], Loss: %f' % (epoch, opt.niter, i, len(train_loader), loss_avg.val()))
+            print(
+                'epoch: [%-5d/%d],step: [%-4d/%d], Loss: %f' % (epoch, opt.niter, i, len(train_loader), loss_avg.val()))
             loss_avg.reset()
 
         # 检查点:检查成功率,存储model，
@@ -383,5 +380,6 @@ for epoch in range(opt.niter):
             certVal = val(crnn, val_data_list, criterion)
             time_format = time.strftime('%Y%m%d_%H%M%S')
             print("save model: {0}/netCRNN_{1}_{2}.pth".format(opt.experiment, time_format, int(certVal * 100)))
-            torch.save(crnn.state_dict(),'{0}/netCRNN_{1}_{2}.pth'.format(opt.experiment, time_format, int(certVal * 100)))
+            torch.save(crnn.state_dict(),
+                       '{0}/netCRNN_{1}_{2}.pth'.format(opt.experiment, time_format, int(certVal * 100)))
             keep_only_models()
