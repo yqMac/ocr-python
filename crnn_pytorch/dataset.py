@@ -1,6 +1,8 @@
 #!/usr/bin/python
 # encoding: utf-8
 
+from __future__ import print_function
+from __future__ import print_function
 import random
 import torch
 from torch.utils.data import Dataset
@@ -86,29 +88,29 @@ def merge_lmdb(result_lmdb, lmdb2):
     txn_3 = env_3.begin(write=True)
     count_3 = txn_3.get('num-samples')
 
-    count_total = long(count_2) + long(count_3)
+    count_total = int(count_2) + int(count_3)
     count = 0
     # 遍历数据库
     for (key, value) in database_2:
         txn_3.put(key, value)
         count += 1
-        if (count % 1000 == 0):
+        if count % 1000 == 0:
             print ("Merge: {}".format(count))
             txn_3.commit()
             txn_3 = env_3.begin(write=True)
 
-    if (count % 1000 != 0):
+    if count % 1000 != 0:
         txn_3.commit()
         txn_3 = env_3.begin(write=True)
 
     # 更新大小
     txn_3.put("num-samples", str(count_total))
     # 输出结果lmdb的状态信息，可以看到数据是否合并成功
-    print env_3.stat()
+    print(env_3.stat())
     # 关闭lmdb
     env_2.close()
     env_3.close()
-    print 'Merge success! count: {}'.format(count)
+    print('Merge success! count: {}'.format(count))
 
 
 class resizeNormalize(object):
