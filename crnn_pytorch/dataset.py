@@ -88,6 +88,7 @@ def merge_lmdb(result_lmdb, lmdb2):
     # 遍历数据库
     for (key, value) in database_2:
         txn_3.put(key, value)
+        count += 1
         if (count % 1000 == 0):
             print ("Merge: {}".format(count))
             txn_3.commit()
