@@ -94,11 +94,13 @@ def initTrainDataLoader():
     # 创建一个临时统一的数据库
     print("开始创建临时数据库，存储所有的训练数据")
     tmpTrainLmdb = "tmpLmdb"
-    if os.path.exists(tmpTrainLmdb):
-        print("临时数据库已经存在，删除重建：{}".format(tmpTrainLmdb))
-        os.removedirs(tmpTrainLmdb)
     if not os.path.exists(tmpTrainLmdb):
         os.mkdir(tmpTrainLmdb)
+    if os.path.exists(tmpTrainLmdb):
+        ds = os.listdir(tmpTrainLmdb)
+        for d in ds:
+            os.remove(tmpTrainLmdb + "/" + d)
+            print("临时数据库已经存在，删除重建：{}".format(tmpTrainLmdb + "/" + d))
     # 开始遍历所有已存在的数据库，写入临时数据库
     trains_dir = dataset_dir
     fs = os.listdir(trains_dir)
