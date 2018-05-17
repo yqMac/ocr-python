@@ -326,7 +326,7 @@ def val(crnn, val_data_list_param, criterion, max_iter=100):
 
 
 # 训练一个Batch
-def trainBatch(crnn, train_iter, criterion, optimizer):
+def trainBatch(crnn, criterion, optimizer):
     # 取一个Batch的数据集
     data = train_iter.next()
     # 区分图片 和 标签
