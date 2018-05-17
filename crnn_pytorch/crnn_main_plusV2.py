@@ -59,9 +59,6 @@ print(opt)
 4、程序会读取生成结果目录( 默认expr )下的网络，重新加载，继续训练
 5、workers 指定程序训练过程中生成的进程数，越多占用资源越多
 '''
-import sys
-# 由于样本可能太大,所以设置最大递归深度为1千万
-sys.setrecursionlimit(10000000)
 
 # 训练结果存储目录
 if opt.experiment is None:
@@ -363,11 +360,15 @@ def keep_only_models(n=10):
         os.remove(model_file)
 
 
+# 取合适的存储时机
+saveInterval = min(opt.saveInterval, len(train_loader))
+
 # epochs 迭代训练多少次
 for epoch in range(opt.niter):
 
     train_iter = iter(train_loader)
     i = 0
+
     while i < len(train_loader):
         for p in crnn.parameters():
             p.requires_grad = True
@@ -384,7 +385,7 @@ for epoch in range(opt.niter):
             loss_avg.reset()
 
         # 检查点:检查成功率,存储model，
-        if i % opt.saveInterval == 0:
+        if i % saveInterval == 0:
             certVal = val(crnn, val_data_list, criterion)
             time_format = time.strftime('%Y%m%d_%H%M%S')
             print("save model: {0}/netCRNN_{1}_{2}.pth".format(opt.experiment, time_format, int(certVal * 100)))
