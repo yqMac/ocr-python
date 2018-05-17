@@ -96,7 +96,7 @@ def initTrainDataLoader():
     tmpTrainLmdb = "tmpLmdb"
     if os.path.exists(tmpTrainLmdb):
         print("临时数据库已经存在，删除重建：{}".format(tmpTrainLmdb))
-        os.remove(tmpTrainLmdb)
+        os.removedirs(tmpTrainLmdb)
     if not os.path.exists(tmpTrainLmdb):
         os.mkdir(tmpTrainLmdb)
     # 开始遍历所有已存在的数据库，写入临时数据库
