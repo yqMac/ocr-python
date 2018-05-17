@@ -21,6 +21,13 @@ parser.add_argument('--head', required=False, help='file name pre to save')
 opt = parser.parse_args()
 print(opt)
 
+'''
+创建流程:
+1、imagePath和imageDirPath 不能同时为空 前者是单数据集情况下的数据目录，后者是多训练集情况下所有数据集目录的文件夹
+2、程序会读取所有目录下的符合正则的文件，写到lmdbPath下，以head(默认为数据集目录名)为文件夹名
+
+'''
+
 
 def checkImageIsValid(imageBin):
     if imageBin is None:
