@@ -7,6 +7,7 @@ import os
 import re
 from glob import glob
 import random
+import uuid
 
 import cv2
 import lmdb  # install lmdb by "pip install lmdb"
@@ -86,9 +87,9 @@ def createDataset(outputPath, imagePathList, outputHead, checkValid=True):
                 if not checkImageIsValid(imageBin):
                     print('%s is not a valid image' % imagePath)
                     continue
-
-            imageKey = 'image-%09d' % cnt
-            labelKey = 'label-%09d' % cnt
+            uid = str(uuid.uuid1()).replace('-', '')
+            imageKey = 'image-' + uid
+            labelKey = 'label-' + uid
             cache[imageKey] = imageBin
             cache[labelKey] = label
             if (i + 1) % 1000 == 0:
