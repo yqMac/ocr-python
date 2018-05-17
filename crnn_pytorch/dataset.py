@@ -92,12 +92,10 @@ def merge_lmdb(result_lmdb, lmdb2):
         if (count % 1000 == 0):
             print ("Merge: {}".format(count))
             txn_3.commit()
-            count = 0
             txn_3 = env_3.begin(write=True)
 
     if (count % 1000 != 0):
         txn_3.commit()
-        count = 0
         txn_3 = env_3.begin(write=True)
 
     # 关闭lmdb
