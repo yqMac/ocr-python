@@ -88,7 +88,9 @@ def merge_lmdb(result_lmdb, lmdb2):
     count_3 = txn_3.get('num-samples')
     if count_3 is None:
         count_3 = '0'
-    count_total = int(count_2) + int(count_3)
+    count_2 = int(count_2)
+    count_3 = int(count_3)
+    count_total = count_2 + count_3
     count = 0
     # 遍历数据库
     for (key, value) in database_2:
