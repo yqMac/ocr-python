@@ -32,8 +32,6 @@ def list_model_count():
     lists = os.listdir(model_path)
     count = 0
     for one in lists:
-        if not one.startswith(".") and one.endswith(".npz"):
-            count += 1
         if not one.startswith(".") and one.endswith(".pth"):
             count += 1
     return count
