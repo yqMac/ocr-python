@@ -42,10 +42,8 @@ def addCRNNModel(one):
         logger.info('loading pretrained model from {}'.format(one))
         if not one.endswith(".pth"):
             return
-        h = one.split("_")[-5]
-        w = one.split("_")[-4]
         id = one.split("_")[-3]
-        steps = one.split("_")[-2]
+        rate = one.split("_")[-2]
         version = "1.0"
         model = crnn.CRNN(32, 1, 37, 256)
         model = torch.nn.DataParallel(model)
@@ -69,9 +67,7 @@ def addCRNNModel(one):
         model.eval()
         model_data = {
             "id": id,
-            "w": w,
-            "h": h,
-            "steps": steps,
+            "rate": rate,
             "id_cracker": model,
             "file_name": one,
             "version": version,
