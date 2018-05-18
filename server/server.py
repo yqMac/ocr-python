@@ -5,7 +5,6 @@ import json
 import logging
 import os
 import sys
-import threading
 from BaseHTTPServer import BaseHTTPRequestHandler
 from BaseHTTPServer import HTTPServer
 from io import BytesIO
@@ -20,7 +19,6 @@ import crnn_pytorch.models.crnn as crnn
 import crnn_pytorch.utils as utils
 from rookie_utils import mod_config
 from rookie_utils.Logger import Logger
-# from rookie_utils.models_watcher import *
 from fontTools.ttLib import TTFont
 import uuid
 
@@ -40,20 +38,6 @@ def list_model_count():
             count += 1
     return count
 
-
-# 监听文件夹的处理方法
-# class FileEventHandler(FileSystemEventHandler):
-#     def __init__(self):
-#         FileSystemEventHandler.__init__(self)
-#
-#     def on_moved(self, event):
-#         print '1'
-#     def on_created(self, event):
-#         print '2'
-#     def on_deleted(self, event):
-#         print '3'
-#     def on_modified(self, event):
-#         print '4'
 
 def addCRNNModel(one):
     try:
@@ -108,12 +92,6 @@ def initModes():
             addCRNNModel(one)
         else:
             print("格式无法匹配模型theano或者crnn: {}".format(one))
-    # 启动文件夹监听服务
-    # global observer
-    # event_handler = FileEventHandler()
-    # observer.schedule(event_handler, watcher_path, True)
-    # observer.start()
-    # observer.join()
 
 
 # 处理网络请求
@@ -254,7 +232,6 @@ mod_config.setPath(".")
 # 项目目录
 project_path = mod_config.getConfig("project", "path")
 if project_path is None or project_path == '':
-    # server_path = os.getcwd()
     server_path = os.path.split(os.path.realpath(__file__))[0]
     project_path = os.path.dirname(server_path)
 
@@ -264,25 +241,17 @@ if not os.path.exists(os.path.dirname(log_path)):
     os.makedirs(os.path.dirname(log_path))
 
 logger = Logger(log_path, logging.INFO, logging.INFO)
-# 线程锁，防止防止model时出问题
-# model_lock = thread.allocate_lock()
 # 读取models所在目录配置
 model_path = project_path + mod_config.getConfig("model_params", "path")
 
 font_path = project_path + mod_config.getConfig("font_params", "path")
-# 监控文件夹
-watcher_path = project_path + mod_config.getConfig("watcher_params", "path")
-logger.info('要监听的文件夹：{0}'.format(watcher_path))
 
+# 所有网络Model
 list_model = os.listdir(model_path)
 # 所有model的缓存
 cracker_map = {}
 
-# 监听服务
-# observer = Observer()
-# 启线程加载Model
 initModes()
-# threading.Thread(target=initModes).start()
 
 if __name__ == '__main__':
     # 读取服务发布端口
@@ -297,5 +266,4 @@ if __name__ == '__main__':
         print(e)
     finally:
         print('final')
-        # observer.stop()
         sys.exit()
