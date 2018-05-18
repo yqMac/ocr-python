@@ -1,0 +1,6 @@
+.DS_Store
+*.pth
+*.pyc
+*.pyo
+*.tmp
+*.log
