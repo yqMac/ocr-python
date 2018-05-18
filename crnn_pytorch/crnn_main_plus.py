@@ -6,6 +6,8 @@
 from __future__ import print_function
 import argparse
 import random
+
+import lmdb
 import torch
 import torch.backends.cudnn as cudnn
 import torch.optim as optim
@@ -24,7 +26,7 @@ import models.crnn as crnn
 parser = argparse.ArgumentParser()
 parser.add_argument('--lmdbPath', required=False, help='path to lmdb dataset')
 # parser.add_argument('--valroot', required=True, help='path to dataset')
-parser.add_argument('--workers', type=int, help='number of data loading workers', default=2)
+parser.add_argument('--workers', type=int, help='number of data loading workers', default=4)
 parser.add_argument('--batchSize', type=int, default=64, help='input batch size')
 parser.add_argument('--imgH', type=int, default=32, help='the height of the input image to network')
 parser.add_argument('--imgW', type=int, default=100, help='the width of the input image to network')
@@ -48,6 +50,15 @@ parser.add_argument('--keep_ratio', action='store_true', help='whether to keep r
 parser.add_argument('--random_sample', action='store_true', help='whether to sample the dataset with random sampler')
 opt = parser.parse_args()
 print(opt)
+
+'''
+训练流程：
+1、将create_dataset 生成的lmdb数据库放在datasets目录下的自己文件夹下
+2、本程序将默认读取datasets目录下的每个文件夹中的train和val，分别作为train和val的数据集
+3、程序会整个所有的train到tmpLmdb目录下的data.lmdb,该数据每次启动会删除并重建
+4、程序会读取生成结果目录( 默认expr )下的网络，重新加载，继续训练
+5、workers 指定程序训练过程中生成的进程数，越多占用资源越多
+'''
 
 # 训练结果存储目录
 if opt.experiment is None:
@@ -79,41 +90,50 @@ if dataset_dir is None:
 
 
 # 初始化加载 训练数据集
-def initTrainDataSets():
-    trains_dir = dataset_dir
-    fs = os.listdir(trains_dir)
-    index = 0
-    list_name = []
-    for one in fs:
-        # if not one.endswith(".mdb"):
-        #     continue
-        root_path = trains_dir + "/" + one + "/train"
-        if not os.path.exists(root_path):
-            continue
-        # print("添加训练数据集:{}".format(root_path))
+def initTrainDataLoader():
+    # 创建一个临时统一的数据库
+    tmpTrainLmdb = "tmpLmdb"
+    if not os.path.exists(tmpTrainLmdb):
+        os.mkdir(tmpTrainLmdb)
 
-        one_dataset = dataset.lmdbDataset(root=root_path)
-        assert one_dataset
-        if opt.random_sample:
-            sampler = dataset.randomSequentialSampler(one_dataset, opt.batchSize)
-        else:
-            sampler = None
-        one_loader = torch.utils.data.DataLoader(
-            one_dataset, batch_size=opt.batchSize,
-            shuffle=True, sampler=sampler,
-            num_workers=int(opt.workers),
-            collate_fn=dataset.alignCollate(imgH=opt.imgH, imgW=opt.imgW, keep_ratio=opt.keep_ratio))
+    if not os.path.exists(tmpTrainLmdb + "/data.mdb"):
+        print("临时数据库不存在,开始创建临时数据库,存储所有的训练数据")
+        if os.path.exists(tmpTrainLmdb):
+            ds = os.listdir(tmpTrainLmdb)
+            for d in ds:
+                os.remove(tmpTrainLmdb + "/" + d)
+                print("临时数据库已经存在，删除重建：{}".format(tmpTrainLmdb + "/" + d))
+        # 开始遍历所有已存在的数据库，写入临时数据库
+        trains_dir = dataset_dir
+        fs = os.listdir(trains_dir)
+        count = len(fs)
+        index = 0
+        for one in fs:
+            index += 1
+            root_path = trains_dir + "/" + one + "/train"
+            if not os.path.exists(root_path):
+                continue
+            print("读取训练数据集:{},写入临时数据库:{}/{}".format(root_path, index, count))
+            dataset.merge_lmdb(tmpTrainLmdb, root_path)
+    else:
+        print("临时数据库存在,直接将已有数据作为全部数据,如果需要变更,请删除再运行")
 
-        train_data = {
-            "dir": one,
-            "dataset": one_dataset,
-            "loader": one_loader,
-            "index": index
-        }
-        index += 1
-        train_data_list.append(train_data)
-        list_name.append(one)
-    print("加载了{}个训练集:{}".format(len(list_name), list_name))
+    print("开始加载临时数据库中的全部数据")
+    train_dataset = dataset.lmdbDataset(root=tmpTrainLmdb)
+    assert train_dataset
+    print("加载临时数据库 成功")
+
+    if opt.random_sample:
+        sampler = dataset.randomSequentialSampler(train_dataset, opt.batchSize)
+    else:
+        sampler = None
+    loader = torch.utils.data.DataLoader(
+        train_dataset, batch_size=opt.batchSize,
+        shuffle=True, sampler=sampler,
+        num_workers=int(opt.workers),
+        collate_fn=dataset.alignCollate(imgH=opt.imgH, imgW=opt.imgW, keep_ratio=opt.keep_ratio))
+    return loader
+    # print("加载了{}个训练集:{}".format(len(list_name), list_name))
 
 
 # 初始化加载 验证数据集
@@ -143,8 +163,10 @@ def initValDataSets():
     print("加载了{}个验证集:{}".format(len(list_name), list_name))
 
 
-initTrainDataSets()
+# 加载训练数据集
+train_loader = initTrainDataLoader()
 
+# 加载校验数据集
 initValDataSets()
 
 # 字符集长度
@@ -253,6 +275,7 @@ def val(crnn, val_data_list_param, criterion, max_iter=100):
         data_loader = torch.utils.data.DataLoader(
             data_set, shuffle=True, batch_size=opt.batchSize, num_workers=int(opt.workers))
         i += 1
+
         # print("验证进度:{}/{},当前Flag:{}".format(i, len(val_data_list_param), val_data['dir']))
 
         val_iter = iter(data_loader)
@@ -303,7 +326,7 @@ def val(crnn, val_data_list_param, criterion, max_iter=100):
 
 
 # 训练一个Batch
-def trainBatch(crnn, train_iter, criterion, optimizer):
+def trainBatch(crnn, criterion, optimizer):
     # 取一个Batch的数据集
     data = train_iter.next()
     # 区分图片 和 标签
@@ -337,59 +360,32 @@ def keep_only_models(n=10):
         os.remove(model_file)
 
 
-# 最长的data长度
-max_train_data_lenght = 0
-for x in range(len(train_data_list)):
-    train_data = train_data_list[x]
-    train_loader = train_data['loader']
+# 取合适的存储时机
+saveInterval = min(opt.saveInterval, len(train_loader))
 
-    # 最长的长度是
-    if max_train_data_lenght < len(train_loader):
-        max_train_data_lenght = len(train_loader)
-
-max_train_data_lenght *= len(train_data_list)
 # epochs 迭代训练多少次
 for epoch in range(opt.niter):
-    # 步数
-    step = 0
-    # 文件索引
-    fileIndex = 0
-    # 一个迭代 训练最长文件的步数 * 文件数
-    while step < max_train_data_lenght:
-        # 本次要训练的模型是哪个
-        fileIndex %= len(train_data_list)
-        train_data = train_data_list[fileIndex]
-        fileIndex += 1
 
-        train_loader = train_data['loader']
-        # 初始化一个iter
-        train_iter = None
-        one_step = step / len(train_data_list)
-        if one_step % len(train_loader) == 0:
-            # 重置当前iter
-            train_iter = iter(train_loader)
-            train_data['iter'] = train_iter
-        else:
-            train_iter = train_data['iter']
-        # 步数更新
-        step += 1
-        # 所有变量都要求梯度
+    train_iter = iter(train_loader)
+    i = 0
+
+    while i < len(train_loader):
         for p in crnn.parameters():
             p.requires_grad = True
-        # 设置为训练模式
         crnn.train()
-        # 训练一个Batch
-        cost = trainBatch(crnn, train_iter, criterion, optimizer)
+
+        cost = trainBatch(crnn, criterion, optimizer)
         loss_avg.add(cost)
+        i += 1
 
         # 多少次batch显示一次进度
-        if step % opt.displayInterval == 0:
-            print('epoch: [%-5d/%d],step: [%-4d-%-4d/%d], Loss: %f' % (
-                epoch, opt.niter, step, one_step, max_train_data_lenght / len(train_data_list), loss_avg.val()))
+        if i % opt.displayInterval == 0:
+            print(
+                'epoch: [%-5d/%d],step: [%-4d/%d], Loss: %f' % (epoch, opt.niter, i, len(train_loader), loss_avg.val()))
             loss_avg.reset()
 
         # 检查点:检查成功率,存储model，
-        if step % opt.saveInterval == 0:
+        if i % saveInterval == 0:
             certVal = val(crnn, val_data_list, criterion)
             time_format = time.strftime('%Y%m%d_%H%M%S')
             print("save model: {0}/netCRNN_{1}_{2}.pth".format(opt.experiment, time_format, int(certVal * 100)))
