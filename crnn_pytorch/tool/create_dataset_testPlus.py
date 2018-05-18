@@ -17,6 +17,7 @@ parser.add_argument('--imagePath', required=False, help='path to image')
 parser.add_argument('--imageDirPath', required=False, help='path to image path dirs ')
 parser.add_argument('--lmdbPath', required=False, help='path to lmdb')
 parser.add_argument('--head', required=False, help='file name pre to save')
+parser.add_argument('--regex', required=False, default="^.*_(.*)\..+$", help='parse file regex with group 1')
 opt = parser.parse_args()
 print(opt)
 
@@ -45,7 +46,7 @@ def writeCache(env, cache):
             txn.put(k, v)
 
 
-def createDataset(outputPath, imagePathList, outputHead, checkValid=True):
+def createDataset(outputPath, imagePathList, outputHead, regexStr, checkValid=True):
     """
     Create LMDB dataset for CRNN training.
     split the imagesList to ten parts, nine for train, one for val
@@ -81,7 +82,7 @@ def createDataset(outputPath, imagePathList, outputHead, checkValid=True):
     for i in range(nSamples):
         imagePath = imagePathList[i]
         try:
-            match = re.compile("^.*_(.*)\..+$").match(imagePath.split("/")[-1])
+            match = re.compile(regexStr).match(imagePath.split("/")[-1])
             # match = re.compile("^(.*)\..+$").match(imagePath.split("/")[-1])
             label = match.group(1)
             if not os.path.exists(imagePath):
@@ -141,9 +142,9 @@ if __name__ == '__main__':
             paths = glob(path + "/*.*")
             print("初始化加载:dir:{},flag:{},step:{}/{}".format(path, head, index, count))
             random.shuffle(paths)
-            createDataset(opt.lmdbPath, paths, head)
+            createDataset(opt.lmdbPath, paths, head, opt.regex)
     else:
         paths = glob(opt.imagePath + "/*.*")
         print("split the imagePathList to ten parts, nine for train, one for val")
         random.shuffle(paths)
-        createDataset(opt.lmdbPath, paths, opt.head)
+        createDataset(opt.lmdbPath, paths, opt.head, opt.regex)
