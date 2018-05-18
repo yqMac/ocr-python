@@ -86,7 +86,8 @@ def merge_lmdb(result_lmdb, lmdb2):
     env_3 = lmdb.open(result_lmdb, map_size=int(1e12))
     txn_3 = env_3.begin(write=True)
     count_3 = txn_3.get('num-samples')
-
+    if count_3 is None:
+        count_3 = '0'
     count_total = int(count_2) + int(count_3)
     count = 0
     # 遍历数据库
