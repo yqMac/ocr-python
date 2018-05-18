@@ -103,6 +103,8 @@ def merge_lmdb(result_lmdb, lmdb2):
             new_key = "label-%09d" % (count_3 + int(new_key))
         else:
             continue
+        if count == 0:
+            print("first change new_key: {} ".format(new_key))
         txn_3.put(new_key, value)
         count += 1
         if count % 1000 == 0:
