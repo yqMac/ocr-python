@@ -1,5 +1,5 @@
 [project]
-path=/home/tianchuang/rookie/work/pythonOcr
+path=
 
 [model_params]
 path=/data/model/
