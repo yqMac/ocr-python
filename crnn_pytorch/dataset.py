@@ -118,6 +118,7 @@ def merge_lmdb(result_lmdb, lmdb2):
 
     # 更新大小
     txn_3.put("num-samples", str(count_total))
+    txn_3.commit()
     # 输出结果lmdb的状态信息，可以看到数据是否合并成功
     print(env_3.stat())
     # 关闭lmdb
