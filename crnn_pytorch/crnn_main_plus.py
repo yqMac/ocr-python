@@ -8,6 +8,7 @@ import argparse
 import random
 
 import lmdb
+import logging
 import torch
 import torch.backends.cudnn as cudnn
 import torch.optim as optim
@@ -20,6 +21,8 @@ import os
 import utils
 import dataset
 from glob import glob
+from rookie_utils import mod_config
+from rookie_utils.Logger import Logger
 
 import models.crnn as crnn
 
@@ -60,6 +63,26 @@ print(opt)
 5、workers 指定程序训练过程中生成的进程数，越多占用资源越多
 '''
 
+# 日志打印
+# 设置上层【项目根目录】为配置文件 所在目录
+mod_config.setPath(".")
+# 项目目录
+project_path = mod_config.getConfig("project", "path")
+if project_path is None or project_path == '':
+    server_path = os.path.split(os.path.realpath(__file__))[0]
+    project_path = os.path.dirname(server_path)
+# 日志输出
+log_path = project_path + mod_config.getConfig("logger", "file")
+if not os.path.exists(os.path.dirname(log_path)):
+    os.makedirs(os.path.dirname(log_path))
+logger = Logger(log_path, logging.INFO, logging.INFO)
+
+
+def print_msg(msg):
+    print(msg)
+    logger.info(msg)
+
+
 # 训练结果存储目录
 if opt.experiment is None:
     opt.experiment = 'expr'
@@ -69,7 +92,7 @@ os.system('mkdir {0}'.format(opt.experiment))
 file_path = os.path.dirname(os.path.realpath(__file__))
 
 opt.manualSeed = random.randint(1, 10000)  # fix seed
-print("Random Seed: ", opt.manualSeed)
+print_msg("Random Seed: {0}".format(opt.manualSeed))
 random.seed(opt.manualSeed)
 np.random.seed(opt.manualSeed)
 torch.manual_seed(opt.manualSeed)
@@ -77,7 +100,7 @@ torch.manual_seed(opt.manualSeed)
 cudnn.benchmark = True
 
 if torch.cuda.is_available() and not opt.cuda:
-    print("WARNING: You have a CUDA device, so you should probably run with --cuda")
+    print_msg("WARNING: You have a CUDA device, so you should probably run with --cuda")
 
 # 训练数据集
 train_data_list = []
@@ -97,12 +120,12 @@ def initTrainDataLoader():
         os.mkdir(tmpTrainLmdb)
 
     if not os.path.exists(tmpTrainLmdb + "/data.mdb"):
-        print("临时数据库不存在,开始创建临时数据库,存储所有的训练数据")
+        print_msg("临时数据库不存在,开始创建临时数据库,存储所有的训练数据")
         if os.path.exists(tmpTrainLmdb):
             ds = os.listdir(tmpTrainLmdb)
             for d in ds:
                 os.remove(tmpTrainLmdb + "/" + d)
-                print("临时数据库已经存在，删除重建：{}".format(tmpTrainLmdb + "/" + d))
+                print_msg("临时数据库已经存在，删除重建：{}".format(tmpTrainLmdb + "/" + d))
         # 开始遍历所有已存在的数据库，写入临时数据库
         trains_dir = dataset_dir
         fs = os.listdir(trains_dir)
@@ -113,15 +136,15 @@ def initTrainDataLoader():
             root_path = trains_dir + "/" + one + "/train"
             if not os.path.exists(root_path):
                 continue
-            print("读取训练数据集:{},写入临时数据库:{}/{}".format(root_path, index, count))
+            print_msg("读取训练数据集:{},写入临时数据库:{}/{}".format(root_path, index, count))
             dataset.merge_lmdb(tmpTrainLmdb, root_path)
     else:
-        print("临时数据库存在,直接将已有数据作为全部数据,如果需要变更,请删除再运行")
+        print_msg("临时数据库存在,直接将已有数据作为全部数据,如果需要变更,请删除再运行")
 
-    print("开始加载临时数据库中的全部数据")
+    print_msg("开始加载临时数据库中的全部数据")
     train_dataset = dataset.lmdbDataset(root=tmpTrainLmdb)
     assert train_dataset
-    print("加载临时数据库 成功")
+    print_msg("加载临时数据库 成功")
 
     if opt.random_sample:
         sampler = dataset.randomSequentialSampler(train_dataset, opt.batchSize)
@@ -160,7 +183,7 @@ def initValDataSets():
         index += 1
         val_data_list.append(val_data)
         list_name.append(one)
-    print("加载了{}个验证集:{}".format(len(list_name), list_name))
+    print_msg("加载了{}个验证集:{}".format(len(list_name), list_name))
 
 
 # 加载训练数据集
@@ -205,13 +228,13 @@ if crnnPath is not None:
         pths.sort()
         if pths[len(pths) - 1].endswith(".pth"):
             continue_path = crnnPath + "/" + pths[len(pths) - 1]
-            print("从上次文件继续训练:{}".format(continue_path))
+            print_msg("从上次文件继续训练:{}".format(continue_path))
             crnn = torch.nn.DataParallel(crnn)
             state_dict = torch.load(continue_path)
             try:
                 crnn.load_state_dict(state_dict)
             except Exception as ex:
-                print("加载时发生异常{0}，开始尝试使用自定义dict".format(ex.message))
+                print_msg("加载时发生异常{0}，开始尝试使用自定义dict".format(ex.message))
                 from collections import OrderedDict
 
                 new_state_dict = OrderedDict()
@@ -221,7 +244,7 @@ if crnnPath is not None:
                 # load params
                 crnn.load_state_dict(new_state_dict)
         else:
-            print("你这不符合格式啊:{}".format(pths[0]))
+            print_msg("你这不符合格式啊:{}".format(pths[0]))
 
 # if opt.crnn != '':
 #     print('loading pretrained model from %s' % opt.crnn)
@@ -316,13 +339,13 @@ def val(crnn, val_data_list_param, criterion, max_iter=100):
         accuracy = one_correct / float(max_iter * opt.batchSize)
         if accuracy < 0.95:
             for raw_pred, pred, gt in zip(raw_preds, sim_preds, cpu_texts):
-                print('%-20s => %-20s, gt: %-20s' % (raw_pred, pred, gt))
+                print_msg('%-20s => %-20s, gt: %-20s' % (raw_pred, pred, gt))
 
-        print('验证 %-3d/%d,Loss: %f,Flag: [%-15s] 的成功率: %f' % (
+        print_msg('验证 %-3d/%d,Loss: %f,Flag: [%-15s] 的成功率: %f' % (
             i, len(val_data_list_param), loss_avg.val(), val_data['dir'], accuracy))
         del data_loader
     accuracy = correct_Count / float(all_Count)
-    print('总的成功率: %f ,总验证文件数: %d ' % (accuracy, all_Count))
+    print_msg('总的成功率: %f ,总验证文件数: %d ' % (accuracy, all_Count))
     return accuracy
 
 
@@ -357,7 +380,7 @@ def keep_only_models(n=10):
     model_files = sorted(glob(opt.experiment + '/{0}*'.format("netCRNN")))
     models_to_delete = model_files[:-n]
     for model_file in models_to_delete:
-        print('remove other model:{}'.format(model_file))
+        print_msg('remove other model:{}'.format(model_file))
         os.remove(model_file)
 
 
@@ -381,16 +404,16 @@ for epoch in range(opt.niter):
 
         # 多少次batch显示一次进度
         if i % opt.displayInterval == 0:
-            print(
+            print_msg(
                 '[%s] epoch: [%-5d/%d],step: [%-4d/%d], Loss: %f' % (
-                time.strftime('%Y%m%d_%H%M%S'), epoch, opt.niter, i, len(train_loader), loss_avg.val()))
+                    time.strftime('%Y%m%d_%H%M%S'), epoch, opt.niter, i, len(train_loader), loss_avg.val()))
             loss_avg.reset()
 
         # 检查点:检查成功率,存储model，
         if i % saveInterval == 0:
             certVal = val(crnn, val_data_list, criterion)
             time_format = time.strftime('%Y%m%d_%H%M%S')
-            print("save model: {0}/netCRNN_{1}_{2}.pth".format(opt.experiment, time_format, int(certVal * 100)))
+            print_msg("save model: {0}/netCRNN_{1}_{2}.pth".format(opt.experiment, time_format, int(certVal * 100)))
             torch.save(crnn.state_dict(),
                        '{0}/netCRNN_{1}_{2}.pth'.format(opt.experiment, time_format, int(certVal * 100)))
             keep_only_models()
