@@ -381,7 +381,8 @@ for epoch in range(opt.niter):
         # 多少次batch显示一次进度
         if i % opt.displayInterval == 0:
             print(
-                'epoch: [%-5d/%d],step: [%-4d/%d], Loss: %f' % (epoch, opt.niter, i, len(train_loader), loss_avg.val()))
+                '[%s] epoch: [%-5d/%d],step: [%-4d/%d], Loss: %f' % (
+                time.strftime('%Y%m%d_%H%M%S'), epoch, opt.niter, i, len(train_loader), loss_avg.val()))
             loss_avg.reset()
 
         # 检查点:检查成功率,存储model，
