@@ -82,8 +82,9 @@ logger = Logger(log_path, logging.INFO, logging.INFO)
 
 
 def print_msg(msg):
-    print("[%s] %s".format(time.strftime('%Y%m%d_%H:%M:%S'), msg))
-    logger.info("[%s] %s".format(time.strftime('%Y%m%d_%H:%M:%S'), msg))
+    log_msg="[{}] {}".format(time.strftime('%Y%m%d_%H:%M:%S'), msg)
+    print(log_msg)
+    logger.info(log_msg)
 
 
 # 训练结果存储目录
