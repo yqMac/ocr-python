@@ -320,6 +320,7 @@ def val(crnn, val_data_list_param, criterion, max_iter=100):
 
         print('验证 %-3d/%d,Loss: %f,Flag: [%-15s] 的成功率: %f' % (
             i, len(val_data_list_param), loss_avg.val(), val_data['dir'], accuracy))
+        del data_loader
     accuracy = correct_Count / float(all_Count)
     print('总的成功率: %f ,总验证文件数: %d ' % (accuracy, all_Count))
     return accuracy
