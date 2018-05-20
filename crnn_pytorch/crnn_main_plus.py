@@ -65,7 +65,7 @@ print(opt)
 
 # 日志打印
 # 设置上层【项目根目录】为配置文件 所在目录
-mod_config.setPath(".")
+mod_config.setPath("../server/")
 # 项目目录
 project_path = mod_config.getConfig("project", "path")
 if project_path is None or project_path == '':
