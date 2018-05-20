@@ -79,8 +79,8 @@ logger = Logger(log_path, logging.INFO, logging.INFO)
 
 
 def print_msg(msg):
-    print(msg)
-    logger.info(msg)
+    print("[%s] %s".format(time.strftime('%Y%m%d_%H:%M:%S'), msg))
+    logger.info("[%s] %s".format(time.strftime('%Y%m%d_%H:%M:%S'), msg))
 
 
 # 训练结果存储目录
@@ -405,8 +405,8 @@ for epoch in range(opt.niter):
         # 多少次batch显示一次进度
         if i % opt.displayInterval == 0:
             print_msg(
-                '[%s] epoch: [%-5d/%d],step: [%-4d/%d], Loss: %f' % (
-                    time.strftime('%Y%m%d_%H%M%S'), epoch, opt.niter, i, len(train_loader), loss_avg.val()))
+                'epoch: [%-5d/%d],step: [%-4d/%d], Loss: %f' % (
+                    epoch, opt.niter, i, len(train_loader), loss_avg.val()))
             loss_avg.reset()
 
         # 检查点:检查成功率,存储model，
