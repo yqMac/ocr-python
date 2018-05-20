@@ -21,6 +21,9 @@ import os
 import utils
 import dataset
 from glob import glob
+
+sys.path.append("..")
+
 from rookie_utils import mod_config
 from rookie_utils.Logger import Logger
 
