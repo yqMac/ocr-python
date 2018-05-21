@@ -219,7 +219,6 @@ def weights_init(m):
 
 
 crnn = crnn.CRNN(opt.imgH, nc, nclass, opt.nh)
-crnn_h = crnn.get_rnn()
 crnn.apply(weights_init)
 
 # 继续训练
@@ -374,21 +373,15 @@ def trainBatch(crnn, criterion, optimizer):
     preds = crnn(image)
 
     preds_size = Variable(torch.IntTensor([preds.size(0)] * batch_size))
-    cost = criterion(preds, text, preds_size, length) / batch_size
-    my_detash(crnn)
+    crit = criterion(preds, text, preds_size, length)
+    print("sss:{}".format(isinstance(crit, Variable)))
+    cost = crit / batch_size
+
     crnn.zero_grad()
     cost.backward()
     optimizer.step()
     del data
     return cost
-
-
-def my_detash(crnn):
-    h = crnn_h
-    if isinstance(h, torch.Tensor):
-        print('is__just')
-    else:
-        print('size:{},is:{}'.format(len(h), isinstance(h[0], torch.Tensor)))
 
 
 def keep_only_models(n=10):
