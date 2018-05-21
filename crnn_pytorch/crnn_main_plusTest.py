@@ -382,7 +382,7 @@ def trainBatch(crnn, criterion, optimizer):
 
 
 def my_detash(crnn):
-    h = crnn.rnn
+    h = crnn.get_rnn()
     if isinstance(h, torch.Tensor):
         print ('is__just')
     else:
