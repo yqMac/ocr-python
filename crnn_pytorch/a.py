@@ -62,8 +62,8 @@ val_data_list = []
 print("开始加载临时数据库中的全部数据")
 lmdb_path = "/home/rookie/work/githubWork/ocr_crnn/crnn_pytorch/ydsc4IO"
 
-train_dataset = dataset.lmdbDataset(root=lmdb_path)
-dataset.lmdbDataset(root=lmdb_path, transform=dataset.resizeNormalize((100, 32)))
+# train_dataset = dataset.lmdbDataset(root=lmdb_path)
+train_dataset = dataset.lmdbDataset(root=lmdb_path, transform=dataset.resizeNormalize((100, 32)))
 assert train_dataset
 print("加载临时数据库 成功")
 
