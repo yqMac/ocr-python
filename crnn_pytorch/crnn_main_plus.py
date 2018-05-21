@@ -23,6 +23,7 @@ import dataset
 from glob import glob
 import sys
 import gc
+
 sys.path.append("..")
 
 from rookie_utils import mod_config
@@ -326,7 +327,7 @@ def val(crnn, val_data_list_param, criterion, max_iter=100):
 
             preds = crnn(image)
             preds_size = Variable(torch.IntTensor([preds.size(0)] * batch_size))
-            cost = criterion(preds, text, preds_size, length) / batch_size
+            cost = criterion(preds, text, preds_size, length)
             loss_avg.add(cost)
             _, preds = preds.max(2, keepdim=True)
             preds = preds.squeeze(2)
@@ -372,7 +373,10 @@ def trainBatch(crnn, criterion, optimizer):
     preds = crnn(image)
 
     preds_size = Variable(torch.IntTensor([preds.size(0)] * batch_size))
-    cost = criterion(preds, text, preds_size, length) / batch_size
+    cost = criterion(preds, text, preds_size, length)
+    # print("sss:{}".format(isinstance(crit, Variable)))
+    # cost = crit / batch_size
+
     crnn.zero_grad()
     cost.backward()
     optimizer.step()
@@ -422,4 +426,3 @@ for epoch in range(opt.niter):
                        '{0}/netCRNN_{1}_{2}.pth'.format(opt.experiment, time_format, int(certVal * 100)))
             keep_only_models()
             gc.collect()
-
