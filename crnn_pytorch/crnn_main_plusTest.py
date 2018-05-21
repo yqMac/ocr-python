@@ -23,6 +23,7 @@ import dataset
 from glob import glob
 import sys
 import gc
+
 sys.path.append("..")
 
 from rookie_utils import mod_config
@@ -218,6 +219,7 @@ def weights_init(m):
 
 
 crnn = crnn.CRNN(opt.imgH, nc, nclass, opt.nh)
+crnn_h = crnn.get_rnn()
 crnn.apply(weights_init)
 
 # 继续训练
@@ -382,11 +384,12 @@ def trainBatch(crnn, criterion, optimizer):
 
 
 def my_detash(crnn):
-    h = crnn.get_rnn()
+    h = crnn_h
     if isinstance(h, torch.Tensor):
-        print ('is__just')
+        print('is__just')
     else:
-        print ('size:{},is:{}'.format(len(h), isinstance(h[0], torch.Tensor)))
+        print('size:{},is:{}'.format(len(h), isinstance(h[0], torch.Tensor)))
+
 
 def keep_only_models(n=10):
     model_files = sorted(glob(opt.experiment + '/{0}*'.format("netCRNN")))
@@ -430,4 +433,3 @@ for epoch in range(opt.niter):
                        '{0}/netCRNN_{1}_{2}.pth'.format(opt.experiment, time_format, int(certVal * 100)))
             keep_only_models()
             gc.collect()
-
