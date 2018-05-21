@@ -76,10 +76,3 @@ class CRNN(nn.Module):
         output = self.rnn(conv)
 
         return output
-
-    def my_detash(self):
-        h = self.rnn
-        if isinstance(h, torch.Tensor):
-            print 'is__just'
-        else:
-            print 'size:{},is:{}'.format(len(h), isinstance(h[0], torch.Tensor))
