@@ -22,6 +22,7 @@ import utils
 import dataset
 from glob import glob
 import sys
+import gc
 sys.path.append("..")
 
 from rookie_utils import mod_config
@@ -420,3 +421,5 @@ for epoch in range(opt.niter):
             torch.save(crnn.state_dict(),
                        '{0}/netCRNN_{1}_{2}.pth'.format(opt.experiment, time_format, int(certVal * 100)))
             keep_only_models()
+            gc.collect()
+
