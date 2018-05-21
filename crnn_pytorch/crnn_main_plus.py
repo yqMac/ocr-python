@@ -82,7 +82,6 @@ logger = Logger(log_path, logging.INFO, logging.INFO)
 
 
 def print_msg(msg):
-    print(msg)
     logger.info(msg)
 
 
