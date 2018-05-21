@@ -76,5 +76,3 @@ class CRNN(nn.Module):
         output = self.rnn(conv)
 
         return output
-    def get_rnn(self):
-        return self.rnn
