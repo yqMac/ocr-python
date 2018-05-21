@@ -298,7 +298,7 @@ def val(crnn, val_data_list_param, criterion, max_iter=100):
         #     datasetOne, shuffle=True, batch_size=opt.batchSize, num_workers=int(opt.workers))
         data_set = val_data['dataset']
         data_loader = torch.utils.data.DataLoader(
-            data_set, shuffle=True, batch_size=opt.batchSize, num_workers=int(opt.workers))
+            data_set, shuffle=True, batch_size=opt.batchSize, num_workers=1)
         i += 1
 
         # print("验证进度:{}/{},当前Flag:{}".format(i, len(val_data_list_param), val_data['dir']))
