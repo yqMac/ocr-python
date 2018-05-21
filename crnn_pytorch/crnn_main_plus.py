@@ -375,6 +375,7 @@ def trainBatch(crnn, criterion, optimizer):
     crnn.zero_grad()
     cost.backward()
     optimizer.step()
+    del data
     return cost
 
 
