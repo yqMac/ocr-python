@@ -373,13 +373,20 @@ def trainBatch(crnn, criterion, optimizer):
 
     preds_size = Variable(torch.IntTensor([preds.size(0)] * batch_size))
     cost = criterion(preds, text, preds_size, length) / batch_size
-    crnn.my_detash()
+    my_detash(crnn)
     crnn.zero_grad()
     cost.backward()
     optimizer.step()
     del data
     return cost
 
+
+def my_detash(crnn):
+    h = crnn.rnn
+    if isinstance(h, torch.Tensor):
+        print ('is__just')
+    else:
+        print ('size:{},is:{}'.format(len(h), isinstance(h[0], torch.Tensor)))
 
 def keep_only_models(n=10):
     model_files = sorted(glob(opt.experiment + '/{0}*'.format("netCRNN")))
