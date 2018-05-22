@@ -140,9 +140,9 @@ def initTrainDataLoader():
             root_path = trains_dir + "/" + one + "/train"
             if not os.path.exists(root_path):
                 continue
-            print_msg("开始读取训练数据集:{},写入临时数据库:{}/{},max_size:{}".format(root_path, index, count, 100000))
-            sta = dataset.merge_lmdb(tmpTrainLmdb, root_path, 100000)
-            print_msg("数据集:{},sta:{}".format(root_path.split("/")[-2], sta))
+            print_msg("开始读取训练数据集:{},写入临时数据库:{}/{}".format(root_path.split("/")[-2], index, count))
+            sta = dataset.merge_lmdb(tmpTrainLmdb, root_path, max_size=100000, logger=print_msg)
+            print_msg("完成读取:{}".format(sta))
     else:
         print_msg("临时数据库存在,直接将已有数据作为全部数据,如果需要变更,请删除再运行")
 
