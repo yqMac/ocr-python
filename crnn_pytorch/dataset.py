@@ -101,8 +101,8 @@ def merge_lmdb(result_lmdb, lmdb2, max_size=-1):
         lable_key = "label-%09d" % (count)
         new_image_key = "image-%09d" % (count_3 + count)
         new_lable_key = "label-%09d" % (count_3 + count)
-        txn_3.put(new_image_key, env_2.get(image_key))
-        txn_3.put(new_lable_key, env_2.get(lable_key))
+        txn_3.put(new_image_key, txn_2.get(image_key))
+        txn_3.put(new_lable_key, txn_2.get(lable_key))
         if count % 1000 == 0:
             print("Merge: {}".format(count))
             txn_3.commit()
