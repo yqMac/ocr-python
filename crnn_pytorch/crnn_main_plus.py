@@ -350,7 +350,7 @@ def val(crnn, val_data_list_param, criterion, max_iter=100):
 
         print_msg('验证 %-3d/%d,Loss: %f,Flag: [%-15s] 的成功率: %f' % (
             i, len(val_data_list_param), loss_avg.val(), val_data['dir'], accuracy))
-        del data_loader
+        del max_iter
     accuracy = correct_Count / float(all_Count)
     print_msg('总的成功率: %f ,总验证文件数: %d ' % (accuracy, all_Count))
     return accuracy
@@ -385,7 +385,7 @@ def trainBatch(crnn, criterion, optimizer):
     crnn.zero_grad()
     cost.backward()
     optimizer.step()
-    del data
+
     return cost
 
 
