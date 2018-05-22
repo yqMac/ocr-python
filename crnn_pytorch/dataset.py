@@ -69,7 +69,7 @@ class lmdbDataset(Dataset):
 
 
 # read lmdb2 data then write into lmdb1
-def merge_lmdb(result_lmdb, lmdb2, max_size=-1):
+def merge_lmdb(result_lmdb, lmdb2, max_size=-1, logger=None):
     # env代表Environment, txn代表Transaction
     print('Merge start!')
     # 打开lmdb文件，读模式
@@ -94,6 +94,8 @@ def merge_lmdb(result_lmdb, lmdb2, max_size=-1):
         max_size = count_2
 
     count_total = max_size + count_3
+    if logger!=None:
+        logger("数据集:{},总:{},处理:{},整合后:{}".format(lmdb2,count_2,max_size,count_total))
     count = 1
     # 遍历数据库
     while count <= max_size:
