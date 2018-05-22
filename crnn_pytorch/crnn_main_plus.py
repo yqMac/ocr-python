@@ -327,7 +327,9 @@ def val(crnn, val_data_list_param, criterion, max_iter=100):
 
             preds = crnn(image)
             preds_size = Variable(torch.IntTensor([preds.size(0)] * batch_size))
-            cost = criterion(preds, text, preds_size, length)
+            # cost = criterion(preds, text, preds_size, length)
+            cost = criterion(preds, text, preds_size, length) / batch_size
+
             loss_avg.add(cost)
             _, preds = preds.max(2, keepdim=True)
             preds = preds.squeeze(2)
@@ -373,7 +375,9 @@ def trainBatch(crnn, criterion, optimizer):
     preds = crnn(image)
 
     preds_size = Variable(torch.IntTensor([preds.size(0)] * batch_size))
-    cost = criterion(preds, text, preds_size, length)
+    # cost = criterion(preds, text, preds_size, length)
+    cost = criterion(preds, text, preds_size, length) / batch_size
+
     # print("sss:{}".format(isinstance(crit, Variable)))
     # cost = crit / batch_size
 
