@@ -341,7 +341,7 @@ def val(crnn, val_data_list_param, criterion, max_iter=100):
                     # 两个成功数量都加1
                     one_correct += 1
                     correct_Count += 1
-
+        del val_iter
         raw_preds = converter.decode(preds.data, preds_size.data, raw=True)[:opt.n_test_disp]
         accuracy = one_correct / float(max_iter * opt.batchSize)
         if accuracy < 0.95:
@@ -350,7 +350,8 @@ def val(crnn, val_data_list_param, criterion, max_iter=100):
 
         print_msg('验证 %-3d/%d,Loss: %f,Flag: [%-15s] 的成功率: %f' % (
             i, len(val_data_list_param), loss_avg.val(), val_data['dir'], accuracy))
-        del max_iter
+
+
     accuracy = correct_Count / float(all_Count)
     print_msg('总的成功率: %f ,总验证文件数: %d ' % (accuracy, all_Count))
     return accuracy
