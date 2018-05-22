@@ -94,28 +94,20 @@ def merge_lmdb(result_lmdb, lmdb2, max_size=-1):
         max_size = count_2
 
     count_total = max_size + count_3
-    count = 0
+    count = 1
     # 遍历数据库
-    for (key, value) in database_2:
-        new_key = str(key)
-        if new_key.startswith("image-"):
-            new_key = new_key.replace("image-", "")
-            new_key = "image-%09d" % (count_3 + int(new_key))
-        elif new_key.startswith("label-"):
-            new_key = new_key.replace("label-", "")
-            new_key = "label-%09d" % (count_3 + int(new_key))
-        else:
-            continue
-        if count == 0:
-            print("first change new_key: {} ".format(new_key))
-        txn_3.put(new_key, value)
-        count += 1
+    while count <= max_size:
+        image_key = "image-%09d" % (count)
+        lable_key = "label-%09d" % (count)
+        new_image_key = "image-%09d" % (count_3 + count)
+        new_lable_key = "label-%09d" % (count_3 + count)
+        txn_3.put(new_image_key, env_2.get(image_key))
+        txn_3.put(new_lable_key, env_2.get(lable_key))
         if count % 1000 == 0:
             print("Merge: {}".format(count))
             txn_3.commit()
             txn_3 = env_3.begin(write=True)
-        if count  >= max_size:
-            break
+        count += 1
     if count % 1000 != 0:
         txn_3.commit()
         txn_3 = env_3.begin(write=True)
