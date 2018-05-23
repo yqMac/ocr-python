@@ -122,6 +122,7 @@ def initTrainDataLoader():
     # 默认未指定单训练集，则创建一个临时统一的数据库，并将datasets中得所有训练集归并
     tmpTrainLmdb = "tmpLmdb"
     # 使用指定的单训练集
+    print_msg("是否指定目录:{}".format(opt.ds))
     if opt.ds is not None and opt.ds != '':
         tmpTrainLmdb = opt.ds
     if not os.path.exists(tmpTrainLmdb):
