@@ -436,6 +436,7 @@ for epoch in range(opt.niter):
                        '{0}/netCRNN_{1}_{2}.pth'.format(opt.experiment, time_format, int(certVal * 100)))
             keep_only_models()
             gc.collect()
-        if i >= (3 * saveInterval):
+        if i >= (1 * saveInterval):
             del train_iter
+            os.popen('sync && echo3 > /proc/sys/vm/drop_caches')
             break
