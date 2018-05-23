@@ -35,6 +35,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--lmdbPath', required=False, help='path to lmdb dataset')
 # parser.add_argument('--valroot', required=True, help='path to dataset')
 parser.add_argument('--workers', type=int, help='number of data loading workers', default=4)
+parser.add_argument('--ds', required=False, help='number of data loading workers', default=4)
 parser.add_argument('--batchSize', type=int, default=64, help='input batch size')
 parser.add_argument('--imgH', type=int, default=32, help='the height of the input image to network')
 parser.add_argument('--imgW', type=int, default=100, help='the width of the input image to network')
@@ -118,8 +119,11 @@ if dataset_dir is None:
 
 # 初始化加载 训练数据集
 def initTrainDataLoader():
-    # 创建一个临时统一的数据库
+    # 默认未指定单训练集，则创建一个临时统一的数据库，并将datasets中得所有训练集归并
     tmpTrainLmdb = "tmpLmdb"
+    # 使用指定的单训练集
+    if not opt.ds is None:
+        tmpTrainLmdb = opt.ds
     if not os.path.exists(tmpTrainLmdb):
         os.mkdir(tmpTrainLmdb)
 
@@ -350,7 +354,6 @@ def val(crnn, val_data_list_param, criterion, max_iter=100):
 
         print_msg('验证 %-3d/%d,Loss: %f,Flag: [%-15s] 的成功率: %f' % (
             i, len(val_data_list_param), loss_avg.val(), val_data['dir'], accuracy))
-
 
     accuracy = correct_Count / float(all_Count)
     print_msg('总的成功率: %f ,总验证文件数: %d ' % (accuracy, all_Count))
