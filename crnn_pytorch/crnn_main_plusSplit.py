@@ -438,5 +438,5 @@ for epoch in range(opt.niter):
             gc.collect()
         if i >= (1 * saveInterval):
             del train_iter
-            os.popen('sync && echo3 > /proc/sys/vm/drop_caches')
+            os.popen('sync && echo 3 > /proc/sys/vm/drop_caches')
             break
