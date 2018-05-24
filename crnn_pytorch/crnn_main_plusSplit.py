@@ -149,7 +149,7 @@ def initTrainDataLoader():
             if not os.path.exists(dataset_dir + "/" + one + "/data.mdb"):
                 continue
             addOneTrain(train_loader_list, dataset_dir + "/" + one)
-    print("加载了{}个训练集:{}".format(len(train_loader_list)))
+    print("加载了{}个训练集".format(len(train_loader_list)))
 
 
 # 初始化加载 验证数据集
