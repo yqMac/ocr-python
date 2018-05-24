@@ -75,10 +75,10 @@ def split(src, out, count):
     else:
         list_path = os.listdir(src)
         for path in list_path:
-            if not os.path.exists(src + path + "/data.mdb"):
+            if not os.path.exists(src + path + "/train/data.mdb"):
                 continue
             # 添加
-            addOne(list_src_obj, src + "/" + path)
+            addOne(list_src_obj, src + path + "/train")
 
     print_msg("要分割的数据源数量:{}".format(len(list_src_obj)))
 
@@ -115,7 +115,7 @@ def split(src, out, count):
             out_txn.put('num-samples', cur_index)
             out_txn.commit()
             out_txn = out_env.begin(write=True)
-            print_msg("write into {},size:{}".format(out_name,cur_index))
+            print_msg("write into {},size:{}".format(out_name, cur_index))
         # 这个写的数据量足够了，开始写下一个文件
         if cur_index >= (count - len(list_src_obj)):
             if cur_index % 1000 != 0:
