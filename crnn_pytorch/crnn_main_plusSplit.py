@@ -279,7 +279,7 @@ else:
     optimizer = optim.RMSprop(crnn.parameters(), lr=opt.lr)
 
 
-def val(crnn, val_data_list_param, criterion, max_iter=100):
+def val(crnn, val_data_list_param, criterion, max_iter_num=1000):
     # print('开始校验准确性')
     for p in crnn.parameters():
         p.requires_grad = False
@@ -304,7 +304,7 @@ def val(crnn, val_data_list_param, criterion, max_iter=100):
         one_correct = 0
         loss_avg = utils.averager()
         # 检测所用的图片数量
-        max_iter = min(max_iter, len(data_loader))
+        max_iter = min(max_iter_num, len(data_loader))
         # 检测的总数量增加
         all_Count += max_iter * opt.batchSize
 
