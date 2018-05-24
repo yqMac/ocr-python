@@ -108,65 +108,46 @@ if torch.cuda.is_available() and not opt.cuda:
     print_msg("WARNING: You have a CUDA device, so you should probably run with --cuda")
 
 # 训练数据集
-train_data_list = []
+train_loader_list = []
 # 验证数据集
 val_data_list = []
 
 dataset_dir = opt.lmdbPath
 if dataset_dir is None:
-    dataset_dir = file_path + '/datasets'
+    dataset_dir = file_path + '/splitDB'
+
+sampler = None
+
+
+def addOneTrain(list, path):
+    one_dataset = dataset.lmdbDataset(root=path)
+    assert one_dataset
+    if opt.random_sample:
+        sampler = dataset.randomSequentialSampler(one_dataset, opt.batchSize)
+    one_loader = torch.utils.data.DataLoader(
+        one_dataset, batch_size=opt.batchSize,
+        shuffle=True, sampler=sampler,
+        num_workers=int(opt.workers),
+        collate_fn=dataset.alignCollate(imgH=opt.imgH, imgW=opt.imgW, keep_ratio=opt.keep_ratio))
+    splits = path.split('/')
+    obj = {
+        'loader': one_loader,
+        'flag': splits[-1] if splits[-1] != 'train' else splits[-2]
+    }
+    list.append(obj)
 
 
 # 初始化加载 训练数据集
 def initTrainDataLoader():
-    # 默认未指定单训练集，则创建一个临时统一的数据库，并将datasets中得所有训练集归并
-    tmpTrainLmdb = "tmpLmdb"
-    # 使用指定的单训练集
-    print_msg("是否指定目录:{}".format(opt.ds))
-    if opt.ds is not None and opt.ds != '':
-        tmpTrainLmdb = opt.ds
-    if not os.path.exists(tmpTrainLmdb):
-        os.mkdir(tmpTrainLmdb)
-
-    if not os.path.exists(tmpTrainLmdb + "/data.mdb"):
-        print_msg("临时数据库不存在,开始创建临时数据库,存储所有的训练数据")
-        if os.path.exists(tmpTrainLmdb):
-            ds = os.listdir(tmpTrainLmdb)
-            for d in ds:
-                os.remove(tmpTrainLmdb + "/" + d)
-                print_msg("临时数据库已经存在，删除重建：{}".format(tmpTrainLmdb + "/" + d))
-        # 开始遍历所有已存在的数据库，写入临时数据库
-        trains_dir = dataset_dir
-        fs = os.listdir(trains_dir)
-        count = len(fs)
-        index = 0
+    if os.path.exists(dataset_dir + "/data.mdb"):
+        addOneTrain(train_loader_list, dataset_dir)
+    else:
+        fs = os.listdir(dataset_dir)
         for one in fs:
-            index += 1
-            root_path = trains_dir + "/" + one + "/train"
-            if not os.path.exists(root_path):
+            if not os.path.exists(dataset_dir + "/" + one + "/data.mdb"):
                 continue
-            print_msg("开始读取训练数据集:{},写入临时数据库:{}/{}".format(root_path.split("/")[-2], index, count))
-            sta = dataset.merge_lmdb(tmpTrainLmdb, root_path, max_size=-1, logger=print_msg)
-            print_msg("完成读取:{}".format(sta))
-    else:
-        print_msg("临时数据库存在,直接将已有数据作为全部数据,如果需要变更,请删除再运行")
-
-    print_msg("开始加载临时数据库中的全部数据")
-    train_dataset = dataset.lmdbDataset(root=tmpTrainLmdb)
-    assert train_dataset
-    print_msg("加载临时数据库 成功")
-
-    if opt.random_sample:
-        sampler = dataset.randomSequentialSampler(train_dataset, opt.batchSize)
-    else:
-        sampler = None
-    loader = torch.utils.data.DataLoader(
-        train_dataset, batch_size=opt.batchSize,
-        shuffle=True, sampler=sampler,
-        num_workers=int(opt.workers),
-        collate_fn=dataset.alignCollate(imgH=opt.imgH, imgW=opt.imgW, keep_ratio=opt.keep_ratio))
-    return loader
-    # print("加载了{}个训练集:{}".format(len(list_name), list_name))
+            addOneTrain(train_loader_list, dataset_dir + "/" + one)
+    print("加载了{}个训练集:{}".format(len(train_loader_list)))
 
 
 # 初始化加载 验证数据集
@@ -197,7 +178,7 @@ def initValDataSets():
 
 
 # 加载训练数据集
-train_loader = initTrainDataLoader()
+initTrainDataLoader()
 
 # 加载校验数据集
 initValDataSets()
@@ -362,9 +343,9 @@ def val(crnn, val_data_list_param, criterion, max_iter=100):
 
 
 # 训练一个Batch
-def trainBatch(crnn, criterion, optimizer):
+def trainBatch(crnn, iter, criterion, optimizer):
     # 取一个Batch的数据集
-    data = train_iter.next()
+    data = iter.next()
     # 区分图片 和 标签
     cpu_images, cpu_texts = data
 
@@ -381,11 +362,7 @@ def trainBatch(crnn, criterion, optimizer):
     preds = crnn(image)
 
     preds_size = Variable(torch.IntTensor([preds.size(0)] * batch_size))
-    # cost = criterion(preds, text, preds_size, length)
     cost = criterion(preds, text, preds_size, length) / batch_size
-
-    # print("sss:{}".format(isinstance(crit, Variable)))
-    # cost = crit / batch_size
 
     crnn.zero_grad()
     cost.backward()
@@ -402,41 +379,48 @@ def keep_only_models(n=10):
         os.remove(model_file)
 
 
-# 取合适的存储时机
-saveInterval = min(opt.saveInterval, len(train_loader))
-
 # epochs 迭代训练多少次
 for epoch in range(opt.niter):
 
-    train_iter = iter(train_loader)
-    i = 0
+    fileIndex = 0
 
-    while i < len(train_loader):
-        for p in crnn.parameters():
-            p.requires_grad = True
-        crnn.train()
+    while fileIndex < len(train_loader_list):
+        # 本次要训练的模型是哪个
+        train_obj = train_loader_list[fileIndex]
+        train_loader = train_obj['loader']
+        flag = train_obj['flag']
+        train_iter = iter(train_loader)
+        fileIndex += 1
+        one_train_step = 0
+        # 取合适的存储时机
+        saveInterval = min(opt.saveInterval, len(train_loader))
 
-        cost = trainBatch(crnn, criterion, optimizer)
-        loss_avg.add(cost)
-        i += 1
+        i = 0
+        while i < len(train_loader):
+            for p in crnn.parameters():
+                p.requires_grad = True
+            crnn.train()
 
-        # 多少次batch显示一次进度
-        if i % opt.displayInterval == 0:
-            print_msg(
-                'epoch: [%-5d/%d],step: [%-4d/%d], Loss: %f' % (
-                    epoch, opt.niter, i, len(train_loader), loss_avg.val()))
-            loss_avg.reset()
+            cost = trainBatch(crnn, train_iter, criterion, optimizer)
+            loss_avg.add(cost)
+            i += 1
 
-        # 检查点:检查成功率,存储model，
-        if i % saveInterval == 0:
-            certVal = val(crnn, val_data_list, criterion)
-            time_format = time.strftime('%Y%m%d_%H%M%S')
-            print_msg("save model: {0}/netCRNN_{1}_{2}.pth".format(opt.experiment, time_format, int(certVal * 100)))
-            torch.save(crnn.state_dict(),
-                       '{0}/netCRNN_{1}_{2}.pth'.format(opt.experiment, time_format, int(certVal * 100)))
-            keep_only_models()
-            gc.collect()
-        if i >= (1 * saveInterval):
-            del train_iter
-            os.popen('sync && echo 3 > /proc/sys/vm/drop_caches')
-            break
+            # 多少次batch显示一次进度
+            if i % opt.displayInterval == 0:
+                print_msg(
+                    'epoch:[%-5d/%d],flag:[%-10s],step: [%-4d/%d], Loss: %f' % (
+                        epoch, opt.niter, flag, i, len(train_loader), loss_avg.val()))
+                loss_avg.reset()
+
+            # 检查点:检查成功率,存储model，
+            if i % saveInterval == 0 or i == len(train_loader):
+                certVal = val(crnn, val_data_list, criterion)
+                time_format = time.strftime('%Y%m%d_%H%M%S')
+                print_msg("save model: {0}/netCRNN_{1}_{2}.pth".format(opt.experiment, time_format, int(certVal * 100)))
+                torch.save(crnn.state_dict(),
+                           '{0}/netCRNN_{1}_{2}.pth'.format(opt.experiment, time_format, int(certVal * 100)))
+                keep_only_models()
+                gc.collect()
+        del train_iter
+        os.popen('sync && echo 3 > /proc/sys/vm/drop_caches')
+        break
