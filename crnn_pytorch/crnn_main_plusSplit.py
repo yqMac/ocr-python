@@ -427,7 +427,8 @@ for epoch in range(opt.niter):
                 torch.save(crnn.state_dict(),
                            '{0}/netCRNN_{1}_{2}.pth'.format(opt.experiment, time_format, int(certVal * 100)))
                 keep_only_models()
-                gc.collect()
+
         del train_iter
         os.popen('sync && echo 3 > /proc/sys/vm/drop_caches')
+        gc.collect()
         break
