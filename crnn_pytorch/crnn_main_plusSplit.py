@@ -32,7 +32,8 @@ from rookie_utils.Logger import Logger
 import models.crnn as crnn
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--lmdbPath', required=False, help='path to lmdb dataset')
+parser.add_argument('--trainPath', required=False, help='path to lmdb dataset')
+parser.add_argument('--valPath', required=False, help='path to lmdb dataset')
 # parser.add_argument('--valroot', required=True, help='path to dataset')
 parser.add_argument('--workers', type=int, help='number of data loading workers', default=4)
 parser.add_argument('--ds', required=False, help='number of data loading workers')
@@ -112,7 +113,7 @@ train_loader_list = []
 # 验证数据集
 val_data_list = []
 
-dataset_dir = opt.lmdbPath
+dataset_dir = opt.trainPath
 if dataset_dir is None:
     dataset_dir = file_path + '/splitDB'
 
@@ -152,14 +153,18 @@ def initTrainDataLoader():
     print("加载了{}个训练集".format(len(train_loader_list)))
 
 
+val_dir = opt.valPath
+if val_dir is None:
+    val_dir = file_path + '/datasets'
+
 # 初始化加载 验证数据集
 def initValDataSets():
-    fs = os.listdir(dataset_dir)
+    fs = os.listdir(val_dir)
     index = 0
     list_name = []
 
     for one in fs:
-        root_path = dataset_dir + "/" + one + "/val"
+        root_path = val_dir + "/" + one + "/val"
         if not os.path.exists(root_path):
             continue
         # print("添加校验数据集:{}".format(root_path))
