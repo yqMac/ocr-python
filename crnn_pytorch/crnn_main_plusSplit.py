@@ -431,4 +431,4 @@ for epoch in range(opt.niter):
         del train_iter
         os.popen('sync && echo 3 > /proc/sys/vm/drop_caches')
         gc.collect()
-        break
+
