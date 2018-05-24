@@ -279,7 +279,7 @@ else:
     optimizer = optim.RMSprop(crnn.parameters(), lr=opt.lr)
 
 
-def val(crnn, val_data_list_param, criterion, max_iter_num=1000):
+def val(crnn, val_data_list_param, criterion, max_iter_num=100):
     # print('开始校验准确性')
     for p in crnn.parameters():
         p.requires_grad = False
