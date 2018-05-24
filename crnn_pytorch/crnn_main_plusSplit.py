@@ -386,48 +386,55 @@ def keep_only_models(n=10):
         os.remove(model_file)
 
 
-# epochs 迭代训练多少次
-for epoch in range(opt.niter):
+try:
 
-    fileIndex = 0
+    # epochs 迭代训练多少次
+    for epoch in range(opt.niter):
 
-    while fileIndex < len(train_loader_list):
-        # 本次要训练的模型是哪个
-        train_obj = train_loader_list[fileIndex]
-        train_loader = train_obj['loader']
-        flag = train_obj['flag']
-        train_iter = iter(train_loader)
-        fileIndex += 1
-        one_train_step = 0
-        # 取合适的存储时机
-        saveInterval = min(opt.saveInterval, len(train_loader))
+        fileIndex = 0
 
-        i = 0
-        while i < len(train_loader):
-            for p in crnn.parameters():
-                p.requires_grad = True
-            crnn.train()
+        while fileIndex < len(train_loader_list):
+            # 本次要训练的模型是哪个
+            train_obj = train_loader_list[fileIndex]
+            train_loader = train_obj['loader']
+            flag = train_obj['flag']
+            train_iter = iter(train_loader)
+            fileIndex += 1
+            one_train_step = 0
+            # 取合适的存储时机
+            saveInterval = min(opt.saveInterval, len(train_loader))
 
-            cost = trainBatch(crnn, train_iter, criterion, optimizer)
-            loss_avg.add(cost)
-            i += 1
+            i = 0
+            while i < len(train_loader):
+                for p in crnn.parameters():
+                    p.requires_grad = True
+                crnn.train()
 
-            # 多少次batch显示一次进度
-            if i % opt.displayInterval == 0:
-                print_msg(
-                    'epoch:[%-3d/%d],flag:[%-10s],step: [%-4d/%d], Loss: %f' % (
-                        epoch, opt.niter, flag, i, len(train_loader), loss_avg.val()))
-                loss_avg.reset()
+                cost = trainBatch(crnn, train_iter, criterion, optimizer)
+                loss_avg.add(cost)
+                i += 1
 
-            # 检查点:检查成功率,存储model，
-            if i % saveInterval == 0 or i == len(train_loader):
-                certVal = val(crnn, val_data_list, criterion)
-                time_format = time.strftime('%Y%m%d_%H%M%S')
-                print_msg("save model: {0}/netCRNN_{1}_{2}.pth".format(opt.experiment, time_format, int(certVal * 100)))
-                torch.save(crnn.state_dict(),
-                           '{0}/netCRNN_{1}_{2}.pth'.format(opt.experiment, time_format, int(certVal * 100)))
-                keep_only_models()
+                # 多少次batch显示一次进度
+                if i % opt.displayInterval == 0:
+                    print_msg(
+                        'epoch:[%-3d/%d],flag:[%-10s],step: [%-4d/%d], Loss: %f' % (
+                            epoch, opt.niter, flag, i, len(train_loader), loss_avg.val()))
+                    loss_avg.reset()
 
-        del train_iter
-        os.popen('sync && echo 3 > /proc/sys/vm/drop_caches')
-        gc.collect()
+                # 检查点:检查成功率,存储model，
+                if i % saveInterval == 0 or i == len(train_loader):
+                    certVal = val(crnn, val_data_list, criterion)
+                    time_format = time.strftime('%Y%m%d_%H%M%S')
+                    print_msg(
+                        "save model: {0}/netCRNN_{1}_{2}.pth".format(opt.experiment, time_format, int(certVal * 100)))
+                    torch.save(crnn.state_dict(),
+                               '{0}/netCRNN_{1}_{2}.pth'.format(opt.experiment, time_format, int(certVal * 100)))
+                    keep_only_models()
+
+            del train_iter
+            os.popen('sync && echo 3 > /proc/sys/vm/drop_caches')
+            gc.collect()
+except Exception as ex:
+    print_msg("EX:" + ex.message)
+finally:
+    print_msg("Game Over")
