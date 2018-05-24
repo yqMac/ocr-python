@@ -6,9 +6,10 @@ import argparse
 import logging
 import os
 import lmdb  # install lmdb by "pip install lmdb"
-
-from rookie_utils import  Logger
 import sys
+sys.path.append("../..")
+sys.path.append("..")
+from rookie_utils.Logger import Logger
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--src', required=True, help='resource lmdbs to split ')
