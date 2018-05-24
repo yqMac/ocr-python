@@ -109,20 +109,20 @@ def split(src, out, count):
                 cur_index += 1
                 writeOne(txn, totol_index, out_txn, cur_index)
         if not keepRuning:
-            out_txn.put('num-samples', cur_index)
+            out_txn.put('num-samples', str(cur_index))
             out_txn.commit()
             out_txn.close()
             break
         # 部分提交
         if cur_index % 1000 == 0:
-            out_txn.put('num-samples', cur_index)
+            out_txn.put('num-samples', str(cur_index))
             out_txn.commit()
             out_txn = out_env.begin(write=True)
             print_msg("write into {},size:{}".format(out_name, cur_index))
         # 这个写的数据量足够了，开始写下一个文件
         if cur_index >= (count - len(list_src_obj)):
             if cur_index % 1000 != 0:
-                out_txn.put('num-samples', cur_index)
+                out_txn.put('num-samples', str(cur_index))
                 print_msg("write into {},size:{}".format(out_name, cur_index))
                 out_txn.commit()
             out_txn.close()
