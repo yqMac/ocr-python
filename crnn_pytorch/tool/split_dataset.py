@@ -6,7 +6,8 @@ import argparse
 import logging
 import os
 import lmdb  # install lmdb by "pip install lmdb"
-import rookie_utils.Logger
+
+from rookie_utils import  Logger
 import sys
 
 parser = argparse.ArgumentParser()
@@ -28,7 +29,7 @@ count是多少个样本为一个文件
 log_path = "../../logs/split.log"
 if not os.path.exists(os.path.dirname(log_path)):
     os.makedirs(os.path.dirname(log_path))
-logger = rookie_utils.Logger(log_path, logging.INFO, logging.INFO)
+logger = Logger(log_path, logging.INFO, logging.INFO)
 
 
 def print_msg(msg):
