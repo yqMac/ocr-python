@@ -111,7 +111,7 @@ def split(src, out, count):
         if not keepRuning:
             out_txn.put('num-samples', str(cur_index))
             out_txn.commit()
-            out_txn.close()
+            out_env.close()
             break
         # 部分提交
         if cur_index % 1000 == 0:
@@ -125,7 +125,7 @@ def split(src, out, count):
                 out_txn.put('num-samples', str(cur_index))
                 print_msg("write into {},size:{}".format(out_name, cur_index))
                 out_txn.commit()
-            out_txn.close()
+            out_env.close()
             out_index += 1
             out_name = out + "/" + ('splitdata%03d' % out_index)
             out_env = lmdb.open(out_name, map_size=1099511627776)
