@@ -116,7 +116,7 @@ dataset_dir = opt.lmdbPath
 if dataset_dir is None:
     dataset_dir = file_path + '/splitDB'
 
-sampler = None
+
 
 
 def addOneTrain(list, path):
@@ -124,6 +124,8 @@ def addOneTrain(list, path):
     assert one_dataset
     if opt.random_sample:
         sampler = dataset.randomSequentialSampler(one_dataset, opt.batchSize)
+    else:
+        sampler = None
     one_loader = torch.utils.data.DataLoader(
         one_dataset, batch_size=opt.batchSize,
         shuffle=True, sampler=sampler,
