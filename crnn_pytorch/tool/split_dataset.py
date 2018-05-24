@@ -7,6 +7,7 @@ import logging
 import os
 import lmdb  # install lmdb by "pip install lmdb"
 import sys
+
 sys.path.append("../..")
 sys.path.append("..")
 from rookie_utils.Logger import Logger
@@ -77,10 +78,10 @@ def split(src, out, count):
     else:
         list_path = os.listdir(src)
         for path in list_path:
-            if not os.path.exists(src + path + "/train/data.mdb"):
+            if not os.path.exists(src + "/" + path + "/train/data.mdb"):
                 continue
             # 添加
-            addOne(list_src_obj, src + path + "/train")
+            addOne(list_src_obj, src + "/" + path + "/train")
 
     print_msg("要分割的数据源数量:{}".format(len(list_src_obj)))
 
