@@ -118,8 +118,6 @@ if dataset_dir is None:
     dataset_dir = file_path + '/splitDB'
 
 
-
-
 def addOneTrain(list, path):
     one_dataset = dataset.lmdbDataset(root=path)
     assert one_dataset
@@ -146,6 +144,7 @@ def initTrainDataLoader():
         addOneTrain(train_loader_list, dataset_dir)
     else:
         fs = os.listdir(dataset_dir)
+        fs.sort()
         for one in fs:
             if not os.path.exists(dataset_dir + "/" + one + "/data.mdb"):
                 continue
@@ -156,6 +155,7 @@ def initTrainDataLoader():
 val_dir = opt.valPath
 if val_dir is None:
     val_dir = file_path + '/datasets'
+
 
 # 初始化加载 验证数据集
 def initValDataSets():
@@ -431,4 +431,3 @@ for epoch in range(opt.niter):
         del train_iter
         os.popen('sync && echo 3 > /proc/sys/vm/drop_caches')
         gc.collect()
-
