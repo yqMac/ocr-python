@@ -203,7 +203,14 @@ for epoch in range(opt.niter):
             i += 1
             train_iter.next()
             print_msg("step:{}".format(i))
-            # try:
+            # 多少次batch显示一次进度
+            if i % 100 == 0:
+                print_msg(
+                    'epoch:[%-3d/%d],flag:[%-10s],step: [%-4d/%d], Loss: %f' % (
+                        epoch, opt.niter, flag, i, len(train_loader), loss_avg.val()))
+
+
+                # try:
             #     del train_iter
             # except BaseException as delEx:
             #     print_msg("EX:" + delEx.message + "_" + str(delEx))
