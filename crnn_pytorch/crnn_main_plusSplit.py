@@ -435,11 +435,13 @@ try:
                 del train_iter
             except Exception as delEx:
                 print_msg("EX:" + delEx.message + "_" + str(delEx))
+                print(delEx)
             finally:
                 print_msg("一个训练文件结束")
                 os.popen('sync && echo 3 > /proc/sys/vm/drop_caches')
                 gc.collect()
 except Exception as ex:
     print_msg("EX:" + ex.message + "_" + str(ex))
+    print (ex)
 finally:
     print_msg("Game Over")
