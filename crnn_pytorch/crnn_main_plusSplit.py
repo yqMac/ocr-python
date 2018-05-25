@@ -431,9 +431,14 @@ try:
                                '{0}/netCRNN_{1}_{2}.pth'.format(opt.experiment, time_format, int(certVal * 100)))
                     keep_only_models()
 
-            del train_iter
-            os.popen('sync && echo 3 > /proc/sys/vm/drop_caches')
-            gc.collect()
+            try:
+                del train_iter
+            except Exception as delEx:
+                print_msg("EX:" + delEx.message + "_" + str(delEx))
+            finally:
+                print_msg("一个训练文件结束")
+                os.popen('sync && echo 3 > /proc/sys/vm/drop_caches')
+                gc.collect()
 except Exception as ex:
     print_msg("EX:" + ex.message + "_" + str(ex))
 finally:
