@@ -202,7 +202,7 @@ for epoch in range(opt.niter):
         while i < len(train_loader):
             i += 1
             train_iter.next()
-            print_msg("step:{}".format(i))
+            # print_msg("step:{}".format(i))
             # 多少次batch显示一次进度
             if i % 100 == 0:
                 print_msg(
