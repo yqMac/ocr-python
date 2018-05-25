@@ -435,6 +435,6 @@ try:
             os.popen('sync && echo 3 > /proc/sys/vm/drop_caches')
             gc.collect()
 except Exception as ex:
-    print_msg("EX:" + ex.message)
+    print_msg("EX:" + ex.message + "_" + str(ex))
 finally:
     print_msg("Game Over")
