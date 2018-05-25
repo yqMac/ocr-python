@@ -372,7 +372,7 @@ def trainBatch(crnn, iter, criterion, optimizer):
     cost = criterion(preds, text, preds_size, length) / batch_size
 
     crnn.zero_grad()
-    cost.backward()
+    # cost.backward()
     optimizer.step()
 
     return cost
@@ -425,9 +425,9 @@ for epoch in range(opt.niter):
                 time_format = time.strftime('%Y%m%d_%H%M%S')
                 print_msg(
                     "save model: {0}/netCRNN_{1}_{2}.pth".format(opt.experiment, time_format, int(certVal * 100)))
-                torch.save(crnn.state_dict(),
-                           '{0}/netCRNN_{1}_{2}.pth'.format(opt.experiment, time_format, int(certVal * 100)))
-                keep_only_models()
+                # torch.save(crnn.state_dict(),
+                #            '{0}/netCRNN_{1}_{2}.pth'.format(opt.experiment, time_format, int(certVal * 100)))
+                # keep_only_models()
 
         try:
             del train_iter
