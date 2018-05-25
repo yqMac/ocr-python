@@ -386,62 +386,61 @@ def keep_only_models(n=10):
         os.remove(model_file)
 
 
-try:
+# epochs 迭代训练多少次
+for epoch in range(opt.niter):
 
-    # epochs 迭代训练多少次
-    for epoch in range(opt.niter):
+    fileIndex = 0
 
-        fileIndex = 0
+    while fileIndex < len(train_loader_list):
+        # 本次要训练的模型是哪个
+        train_obj = train_loader_list[fileIndex]
+        train_loader = train_obj['loader']
+        flag = train_obj['flag']
+        train_iter = iter(train_loader)
+        fileIndex += 1
+        one_train_step = 0
+        # 取合适的存储时机
+        saveInterval = min(opt.saveInterval, len(train_loader))
 
-        while fileIndex < len(train_loader_list):
-            # 本次要训练的模型是哪个
-            train_obj = train_loader_list[fileIndex]
-            train_loader = train_obj['loader']
-            flag = train_obj['flag']
-            train_iter = iter(train_loader)
-            fileIndex += 1
-            one_train_step = 0
-            # 取合适的存储时机
-            saveInterval = min(opt.saveInterval, len(train_loader))
+        i = 0
+        while i < len(train_loader):
+            for p in crnn.parameters():
+                p.requires_grad = True
+            crnn.train()
 
-            i = 0
-            while i < len(train_loader):
-                for p in crnn.parameters():
-                    p.requires_grad = True
-                crnn.train()
+            cost = trainBatch(crnn, train_iter, criterion, optimizer)
+            loss_avg.add(cost)
+            i += 1
 
-                cost = trainBatch(crnn, train_iter, criterion, optimizer)
-                loss_avg.add(cost)
-                i += 1
+            # 多少次batch显示一次进度
+            if i % opt.displayInterval == 0:
+                print_msg(
+                    'epoch:[%-3d/%d],flag:[%-10s],step: [%-4d/%d], Loss: %f' % (
+                        epoch, opt.niter, flag, i, len(train_loader), loss_avg.val()))
+                loss_avg.reset()
 
-                # 多少次batch显示一次进度
-                if i % opt.displayInterval == 0:
-                    print_msg(
-                        'epoch:[%-3d/%d],flag:[%-10s],step: [%-4d/%d], Loss: %f' % (
-                            epoch, opt.niter, flag, i, len(train_loader), loss_avg.val()))
-                    loss_avg.reset()
+            # 检查点:检查成功率,存储model，
+            if i % saveInterval == 0 or i == len(train_loader):
+                certVal = val(crnn, val_data_list, criterion)
+                time_format = time.strftime('%Y%m%d_%H%M%S')
+                print_msg(
+                    "save model: {0}/netCRNN_{1}_{2}.pth".format(opt.experiment, time_format, int(certVal * 100)))
+                torch.save(crnn.state_dict(),
+                           '{0}/netCRNN_{1}_{2}.pth'.format(opt.experiment, time_format, int(certVal * 100)))
+                keep_only_models()
 
-                # 检查点:检查成功率,存储model，
-                if i % saveInterval == 0 or i == len(train_loader):
-                    certVal = val(crnn, val_data_list, criterion)
-                    time_format = time.strftime('%Y%m%d_%H%M%S')
-                    print_msg(
-                        "save model: {0}/netCRNN_{1}_{2}.pth".format(opt.experiment, time_format, int(certVal * 100)))
-                    torch.save(crnn.state_dict(),
-                               '{0}/netCRNN_{1}_{2}.pth'.format(opt.experiment, time_format, int(certVal * 100)))
-                    keep_only_models()
-
-            try:
-                del train_iter
-            except BaseException as delEx:
-                print_msg("EX:" + delEx.message + "_" + str(delEx))
-                print(delEx)
-            finally:
-                print_msg("一个训练文件结束")
-                os.popen('sync && echo 3 > /proc/sys/vm/drop_caches')
-                gc.collect()
-except BaseException as ex:
-    print_msg("EX:" + ex.message + "_" + str(ex))
-    print (ex)
-finally:
-    print_msg("Game Over")
+        try:
+            del train_iter
+        except BaseException as delEx:
+            print_msg("EX:" + delEx.message + "_" + str(delEx))
+            print(delEx)
+        finally:
+            print_msg("一个训练文件结束")
+            os.popen('sync && echo 3 > /proc/sys/vm/drop_caches')
+            gc.collect()
+# except BaseException as ex:
+#     print_msg("EX:" + ex.message + "_" + str(ex))
+#     print (ex)
+#
+# finally:
+#     print_msg("Game Over")
