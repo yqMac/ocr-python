@@ -122,7 +122,7 @@ def initTrainDataLoader():
     # 默认未指定单训练集，则创建一个临时统一的数据库，并将datasets中得所有训练集归并
     tmpTrainLmdb = "tmpLmdb"
     # 使用指定的单训练集
-    if not opt.ds is None:
+    if not opt.ds is None and not opt.ds == '':
         tmpTrainLmdb = opt.ds
     if not os.path.exists(tmpTrainLmdb):
         os.mkdir(tmpTrainLmdb)
@@ -255,11 +255,7 @@ if crnnPath is not None:
         else:
             print_msg("你这不符合格式啊:{}".format(pths[0]))
 
-# if opt.crnn != '':
-#     print('loading pretrained model from %s' % opt.crnn)
-#     crnn = torch.nn.DataParallel(crnn)
-#     crnn.load_state_dict(torch.load(opt.crnn))
-# print(crnn)
+
 
 # 三个张量 分别存储 图片数据、字符串、字符数
 image = torch.FloatTensor(opt.batchSize, 3, opt.imgH, opt.imgH)
