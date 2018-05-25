@@ -185,15 +185,6 @@ length = Variable(length)
 # loss averager
 loss_avg = utils.averager()
 
-# setup optimizer
-if opt.adam:
-    optimizer = optim.Adam(crnn.parameters(), lr=opt.lr,
-                           betas=(opt.beta1, 0.999))
-elif opt.adadelta:
-    optimizer = optim.Adadelta(crnn.parameters(), lr=opt.lr)
-else:
-    optimizer = optim.RMSprop(crnn.parameters(), lr=opt.lr)
-
 # epochs 迭代训练多少次
 for epoch in range(opt.niter):
 
