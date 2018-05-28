@@ -9,7 +9,9 @@ import argparse
 import logging
 import lmdb
 import os
-
+import sys
+sys.path.append("..")
+sys.path.append("../..")
 from rookie_utils.Logger import Logger
 
 parser = argparse.ArgumentParser()
