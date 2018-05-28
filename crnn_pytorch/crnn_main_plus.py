@@ -33,7 +33,7 @@ import models.crnn as crnn
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--trainPath', required=True, help='path to lmdb dataset')
-parser.add_argument('--valPath', required=True, help='path to val datasets')
+parser.add_argument('--valPath', required=True, help='path to val dataset')
 parser.add_argument('--workers', type=int, help='number of data loading workers', default=4)
 parser.add_argument('--ds', required=False, help='number of data loading workers')
 parser.add_argument('--batchSize', type=int, default=64, help='input batch size')
@@ -122,10 +122,10 @@ if not os.path.exists(val_path):
 
 # 初始化加载 训练数据集
 def initTrainDataLoader():
-    print_msg("开始加载临时数据库中的全部数据:{}".format(dataset_dir))
+    print_msg("开始加载训练集lmdb:{}".format(dataset_dir))
     train_dataset = dataset.lmdbDataset(root=dataset_dir)
     assert train_dataset
-    print_msg("加载临时数据库 成功")
+    print_msg("加载训练集lmdb 成功")
 
     if opt.random_sample:
         sampler = dataset.randomSequentialSampler(train_dataset, opt.batchSize)
@@ -217,7 +217,7 @@ if crnnPath is not None:
             try:
                 crnn.load_state_dict(state_dict)
             except Exception as ex:
-                print_msg("加载时发生异常{0}，开始尝试使用自定义dict".format(ex.message))
+                print_msg("加载方式有误{0}，开始切换加载方式:使用自定义dict".format(ex.message))
                 from collections import OrderedDict
 
                 new_state_dict = OrderedDict()
