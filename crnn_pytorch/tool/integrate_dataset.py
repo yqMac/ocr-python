@@ -11,7 +11,6 @@ import logging
 import os
 import sys
 
-
 sys.path.append("../..")
 from rookie_utils.Logger import Logger
 from crnn_pytorch import dataset
@@ -34,9 +33,9 @@ def intergrate(result_lmdb, reset, srcPath, logger=None):
         return
     if not os.path.exists(result_lmdb):
         os.mkdir(result_lmdb)
-    elif os.path.exists(result_lmdb+"/data.mdb") and reset:
-        os.remove(result_lmdb+"/data.mdb")
-        os.remove(result_lmdb+"/lock.mdb")
+    elif os.path.exists(result_lmdb + "/data.mdb") and reset:
+        os.remove(result_lmdb + "/data.mdb")
+        os.remove(result_lmdb + "/lock.mdb")
 
     # 单目录整合
     if os.path.exists(srcPath + "/data.mdb"):
@@ -52,11 +51,12 @@ def intergrate(result_lmdb, reset, srcPath, logger=None):
                 src_list.append(path)
             elif os.path.exists(path + "/train/data.mdb"):
                 src_list.append(path + "/train")
-
+    index = 1
+    count = len(src_list)
     for path in src_list:
         sta = dataset.merge_lmdb(result_lmdb, path, max_size=-1, logger=logger)
-        logger(sta)
-
+        logger("整合进度:完成{}，总{},当前:{}".format(index, count, sta))
+        index += 1
 
 
 # 日志输出
