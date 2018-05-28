@@ -12,7 +12,10 @@ import random
 import cv2
 import lmdb  # install lmdb by "pip install lmdb"
 import numpy as np
+import sys
 
+sys.path.append("..")
+sys.path.append("../..")
 from rookie_utils.Logger import Logger
 
 parser = argparse.ArgumentParser()
@@ -64,8 +67,8 @@ def createDataset(outputPath, imagePathList, outputHead, regexStr, checkValid=Tr
     train_size = nSamples;
     # train_size = int(round(round(nSamples / 10000.0, 1) * 9, 0) * 1000)
     print(train_size)
-    #val_size = nSamples - train_size
-    #print(val_size)
+    # val_size = nSamples - train_size
+    # print(val_size)
     if outputPath is None or outputPath == "":
         file_path = os.path.dirname(os.path.realpath(__file__))
         crnn_path = os.path.dirname(file_path)
@@ -114,6 +117,7 @@ def createDataset(outputPath, imagePathList, outputHead, regexStr, checkValid=Tr
     # cache['num-samples'] = str(train_size)
     # writeCache(env_train, cache)
     print('Created train dataset with %d samples' % train_size)
+
 
 if __name__ == '__main__':
     if (opt.imagePath is None or opt.imagePath == '') and (opt.imageDirPath is None or opt.imageDirPath == ''):
