@@ -133,4 +133,4 @@ if __name__ == '__main__':
     if (opt.result is None or opt.result == '') and (opt.srcPath is None or opt.srcPath == ''):
         raise Exception('imagePath and iamgeDirPath must not to be both blank')
     print_msg("将要吧{}的lmdb附加到{}".format(opt.srcPath, opt.result))
-    intergrate(opt.result, opt.reset, opt.srcPath, -1, print_msg)
+    intergrate(opt.result, opt.reset, opt.srcPath, print_msg)
