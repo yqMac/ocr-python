@@ -17,9 +17,9 @@ from rookie_utils.Logger import Logger
 from crnn_pytorch import dataset
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--result', required=False, help='path to result')
+parser.add_argument('--result', required=True, help='path to result')
 parser.add_argument('--reset', required=True, default=False, help='del the exist lmdb')
-parser.add_argument('--srcPath', required=False, help='path to resource')
+parser.add_argument('--srcPath', required=True, help='path to resource')
 opt = parser.parse_args()
 print(opt)
 
@@ -132,5 +132,5 @@ def print_msg(msg):
 if __name__ == '__main__':
     if (opt.result is None or opt.result == '') and (opt.srcPath is None or opt.srcPath == ''):
         raise Exception('imagePath and iamgeDirPath must not to be both blank')
-    print_msg("将要吧{}的lmdb附加到{}".format(opt.src, opt.result))
-    intergrate(opt.result, opt.reset, opt.src, -1, print_msg)
+    print_msg("将要吧{}的lmdb附加到{}".format(opt.srcPath, opt.result))
+    intergrate(opt.result, opt.reset, opt.srcPath, -1, print_msg)
