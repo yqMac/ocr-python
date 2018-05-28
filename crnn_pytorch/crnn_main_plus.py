@@ -32,8 +32,8 @@ from rookie_utils.Logger import Logger
 import models.crnn as crnn
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--lmdbPath', required=False, help='path to lmdb dataset')
-# parser.add_argument('--valroot', required=True, help='path to dataset')
+parser.add_argument('--trainPath', required=True, help='path to lmdb dataset')
+parser.add_argument('--valPath', required=True, help='path to val datasets')
 parser.add_argument('--workers', type=int, help='number of data loading workers', default=4)
 parser.add_argument('--ds', required=False, help='number of data loading workers')
 parser.add_argument('--batchSize', type=int, default=64, help='input batch size')
@@ -112,46 +112,18 @@ train_data_list = []
 # 验证数据集
 val_data_list = []
 
-dataset_dir = opt.lmdbPath
-if dataset_dir is None:
-    dataset_dir = file_path + '/datasets'
+dataset_dir = opt.trainPath
+if not os.path.exists(dataset_dir) or not os.path.exists(dataset_dir + "/data.mdb"):
+    raise Exception("训练集lmdb目录不存在，别闹，重新来")
+val_path = opt.valPath
+if not os.path.exists(val_path):
+    raise Exception("验证集lmdb目录不存在，别闹，重新来")
 
 
 # 初始化加载 训练数据集
 def initTrainDataLoader():
-    # 默认未指定单训练集，则创建一个临时统一的数据库，并将datasets中得所有训练集归并
-    tmpTrainLmdb = "tmpLmdb"
-    # 使用指定的单训练集
-    if not opt.ds is None and not opt.ds == '':
-        tmpTrainLmdb = opt.ds
-    if not os.path.exists(tmpTrainLmdb):
-        os.mkdir(tmpTrainLmdb)
-
-    if not os.path.exists(tmpTrainLmdb + "/data.mdb"):
-        print_msg("临时数据库不存在,开始创建临时数据库,存储所有的训练数据")
-        if os.path.exists(tmpTrainLmdb):
-            ds = os.listdir(tmpTrainLmdb)
-            for d in ds:
-                os.remove(tmpTrainLmdb + "/" + d)
-                print_msg("临时数据库已经存在，删除重建：{}".format(tmpTrainLmdb + "/" + d))
-        # 开始遍历所有已存在的数据库，写入临时数据库
-        trains_dir = dataset_dir
-        fs = os.listdir(trains_dir)
-        count = len(fs)
-        index = 0
-        for one in fs:
-            index += 1
-            root_path = trains_dir + "/" + one + "/train"
-            if not os.path.exists(root_path):
-                continue
-            print_msg("开始读取训练数据集:{},写入临时数据库:{}/{}".format(root_path.split("/")[-2], index, count))
-            sta = dataset.merge_lmdb(tmpTrainLmdb, root_path, max_size=-1, logger=print_msg)
-            print_msg("完成读取:{}".format(sta))
-    else:
-        print_msg("临时数据库存在,直接将已有数据作为全部数据,如果需要变更,请删除再运行")
-
-    print_msg("开始加载临时数据库中的全部数据")
-    train_dataset = dataset.lmdbDataset(root=tmpTrainLmdb)
+    print_msg("开始加载临时数据库中的全部数据:{}".format(dataset_dir))
+    train_dataset = dataset.lmdbDataset(root=dataset_dir)
     assert train_dataset
     print_msg("加载临时数据库 成功")
 
@@ -165,19 +137,21 @@ def initTrainDataLoader():
         num_workers=int(opt.workers),
         collate_fn=dataset.alignCollate(imgH=opt.imgH, imgW=opt.imgW, keep_ratio=opt.keep_ratio))
     return loader
-    # print("加载了{}个训练集:{}".format(len(list_name), list_name))
 
 
 # 初始化加载 验证数据集
 def initValDataSets():
-    fs = os.listdir(dataset_dir)
+    fs = os.listdir(val_path)
     index = 0
     list_name = []
 
     for one in fs:
-        root_path = dataset_dir + "/" + one + "/val"
-        if not os.path.exists(root_path):
-            continue
+        root_path = val_path + "/" + one + "/val"
+        if not os.path.exists(root_path) or not os.path.exists(val_path + "/" + one + "/val/data.mdb"):
+            if os.path.exists(val_path + "/" + one + "/data.mdb"):
+                root_path = val_path + "/" + one
+            else:
+                continue
         # print("添加校验数据集:{}".format(root_path))
         one_dataset = dataset.lmdbDataset(root=root_path, transform=dataset.resizeNormalize((100, 32)))
 
@@ -254,8 +228,6 @@ if crnnPath is not None:
                 crnn.load_state_dict(new_state_dict)
         else:
             print_msg("你这不符合格式啊:{}".format(pths[0]))
-
-
 
 # 三个张量 分别存储 图片数据、字符串、字符数
 image = torch.FloatTensor(opt.batchSize, 3, opt.imgH, opt.imgH)
