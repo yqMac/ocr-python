@@ -17,7 +17,7 @@ parser.add_argument('--imagePath', required=False, help='path to image')
 parser.add_argument('--imageDirPath', required=False, help='path to image path dirs ')
 parser.add_argument('--lmdbPath', required=False, help='path to lmdb')
 parser.add_argument('--head', required=False, help='file name pre to save')
-parser.add_argument('--regex', required=False, default="^.*_(.*)\..+$", help='parse file regex with group 1')
+parser.add_argument('--regex', required=False, default="^.*_([0-9a-zA-Z]*)\..+$", help='parse file regex with group 1')
 opt = parser.parse_args()
 print(opt)
 
