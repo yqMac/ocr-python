@@ -33,7 +33,8 @@ def intergrate(result_lmdb, reset, srcPath, logger=None):
         return
     if not os.path.exists(result_lmdb):
         os.mkdir(result_lmdb)
-    elif os.path.exists(result_lmdb + "/data.mdb") and reset:
+    elif os.path.exists(result_lmdb + "/data.mdb") and reset is True:
+        logger("目录存在，reset")
         os.remove(result_lmdb + "/data.mdb")
         os.remove(result_lmdb + "/lock.mdb")
 
@@ -44,7 +45,7 @@ def intergrate(result_lmdb, reset, srcPath, logger=None):
         # 多目录整合
         paths = os.listdir(srcPath)
         for p in paths:
-            if not os.path.isdir(srcPath + "/" + p):
+            if not os.path.isdir(srcPath + "/" + p) or p == 'val':
                 continue
             path = srcPath + "/" + p
             if os.path.exists(path + "/data.mdb"):
