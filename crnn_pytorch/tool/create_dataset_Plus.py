@@ -57,6 +57,11 @@ def createDataset(outputPath, imagePathList, outputHead, regexStr, checkValid=Tr
         checkValid    : if true, check the validity of every image
     """
     # assert (len(imagePathList) == len(labelList))
+    for p in imagePathList:
+        match = re.compile(regexStr).match(p.split("/")[-1])
+        if match is None:
+            imagePathList.remove(p)
+
     nSamples = len(imagePathList)
     print(nSamples)
     train_size = int(round(round(nSamples / 10000.0, 1) * 9, 0) * 1000)
@@ -79,6 +84,7 @@ def createDataset(outputPath, imagePathList, outputHead, regexStr, checkValid=Tr
     env_val = lmdb.open(val_lmdb_path, map_size=1099511627776)
     cache = {}
     cnt = 1
+
     for i in range(nSamples):
         imagePath = imagePathList[i]
         try:
