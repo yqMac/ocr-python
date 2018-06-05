@@ -57,6 +57,8 @@ def createDataset(outputPath, imagePathList, outputHead, regexStr, checkValid=Tr
         checkValid    : if true, check the validity of every image
     """
     # assert (len(imagePathList) == len(labelList))
+    print( len(imagePathList))
+
     for p in imagePathList:
         match = re.compile(regexStr).match(p.split("/")[-1])
         if match is None:
