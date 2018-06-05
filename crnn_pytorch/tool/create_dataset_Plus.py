@@ -82,12 +82,16 @@ def createDataset(outputPath, imagePathList, outputHead, regexStr, checkValid=Tr
     for i in range(nSamples):
         imagePath = imagePathList[i]
         try:
-            match = re.compile(regexStr).match(imagePath.split("/")[-1])
-            # match = re.compile("^(.*)\..+$").match(imagePath.split("/")[-1])
-            label = match.group(1)
             if not os.path.exists(imagePath):
                 print('%s does not exist' % imagePath)
                 continue
+            match = re.compile(regexStr).match(imagePath.split("/")[-1])
+            if match is None:
+                print('%s does not match' % imagePath)
+                continue
+            # match = re.compile("^(.*)\..+$").match(imagePath.split("/")[-1])
+            label = match.group(1)
+
             with open(imagePath, 'r') as f:
                 imageBin = f.read()
             if checkValid:
