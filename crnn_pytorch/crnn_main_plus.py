@@ -141,31 +141,42 @@ def initTrainDataLoader():
 
 # 初始化加载 验证数据集
 def initValDataSets():
-    fs = os.listdir(val_path)
     index = 0
     list_name = []
+    if os.path.exists(val_path+"/data.mdb"):
+        one_dataset = dataset.lmdbDataset(root=val_path, transform=dataset.resizeNormalize((100, 32)))
 
-    for one in fs:
-        root_path = val_path + "/" + one + "/val"
-        if not os.path.exists(root_path) or not os.path.exists(val_path + "/" + one + "/val/data.mdb"):
-            if os.path.exists(val_path + "/" + one + "/data.mdb"):
-                root_path = val_path + "/" + one
-            else:
-                continue
-        # print("添加校验数据集:{}".format(root_path))
-        one_dataset = dataset.lmdbDataset(root=root_path, transform=dataset.resizeNormalize((100, 32)))
-
-        # one_loader = torch.utils.data.DataLoader(one_dataset, shuffle=True, batch_size=opt.batchSize,
-        #                                          num_workers=int(opt.workers))
         val_data = {
-            "dir": one,
+            "dir": val_path,
             "dataset": one_dataset,
             # "loader": one_loader,
             "index": index
         }
-        index += 1
         val_data_list.append(val_data)
-        list_name.append(one)
+        list_name.append(val_path)
+    else:
+        fs = os.listdir(val_path)
+        for one in fs:
+            root_path = val_path + "/" + one + "/val"
+            if not os.path.exists(root_path) or not os.path.exists(val_path + "/" + one + "/val/data.mdb"):
+                if os.path.exists(val_path + "/" + one + "/data.mdb"):
+                    root_path = val_path + "/" + one
+                else:
+                    continue
+            # print("添加校验数据集:{}".format(root_path))
+            one_dataset = dataset.lmdbDataset(root=root_path, transform=dataset.resizeNormalize((100, 32)))
+
+            # one_loader = torch.utils.data.DataLoader(one_dataset, shuffle=True, batch_size=opt.batchSize,
+            #                                          num_workers=int(opt.workers))
+            val_data = {
+                "dir": one,
+                "dataset": one_dataset,
+                # "loader": one_loader,
+                "index": index
+            }
+            index += 1
+            val_data_list.append(val_data)
+            list_name.append(one)
     print_msg("加载了{}个验证集:{}".format(len(list_name), list_name))
 
 
