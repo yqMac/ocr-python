@@ -59,10 +59,20 @@ def createDataset(outputPath, imagePathList, outputHead, regexStr, checkValid=Tr
     # assert (len(imagePathList) == len(labelList))
     print( len(imagePathList))
 
+    #check image
     for p in imagePathList:
         match = re.compile(regexStr).match(p.split("/")[-1])
         if match is None:
+            print('%s is not match regex' % p)
             imagePathList.remove(p)
+            continue
+        with open(p, 'r') as f:
+            imageBin = f.read()
+        if checkValid:
+            if not checkImageIsValid(imageBin):
+                print('%s is not a valid image' % p)
+                imagePathList.remove(p)
+
 
     nSamples = len(imagePathList)
     print(nSamples)
@@ -87,6 +97,7 @@ def createDataset(outputPath, imagePathList, outputHead, regexStr, checkValid=Tr
     cache = {}
     cnt = 1
 
+    error_count = 0;
     for i in range(nSamples):
         imagePath = imagePathList[i]
         try:
@@ -100,12 +111,12 @@ def createDataset(outputPath, imagePathList, outputHead, regexStr, checkValid=Tr
             # match = re.compile("^(.*)\..+$").match(imagePath.split("/")[-1])
             label = match.group(1)
 
-            with open(imagePath, 'r') as f:
-                imageBin = f.read()
-            if checkValid:
-                if not checkImageIsValid(imageBin):
-                    print('%s is not a valid image' % imagePath)
-                    continue
+            # with open(imagePath, 'r') as f:
+            #     imageBin = f.read()
+            # if checkValid:
+            #     if not checkImageIsValid(imageBin):
+            #         print('%s is not a valid image' % imagePath)
+            #         continue
 
             imageKey = 'image-%09d' % cnt
             labelKey = 'label-%09d' % cnt
