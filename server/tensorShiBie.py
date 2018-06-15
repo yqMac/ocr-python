@@ -11,12 +11,13 @@ import numpy as np
 import tensorflow as tf
 import pickle
 from PIL import Image
-from rookie_utils.Logger import Logger
+#from rookie_utils.Logger import Logger
 
 import time
-import datetime
 
-logger = Logger("../logs/tensorlog.log", logging.INFO, logging.INFO)
+
+import datetime
+#logger = Logger("../logs/tensorlog.log", logging.INFO, logging.INFO)
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
@@ -195,7 +196,7 @@ def isWhite(img):
             if pixdata[x, y][0] + pixdata[x, y][1] + pixdata[x, y][2] > 200 * 3:
                 count = count + 1
 
-    if (num <= count + 1):
+    if (count==0):
         return True
     return False
 
@@ -208,8 +209,8 @@ def main(images, siteId, sessMap, grapMap):
     label_dict = get_label_dict(label_dir)
     # 把要识别的图片标准化
     for image in images:
-        if (not isWhite(image)):
-            img = ImageChangeSize(image, 64, 64, 2)
+        img = ImageChangeSize(image, 64, 64, 2)
+        if (not isWhite(img)):
             # imageList.append(img)
             final_predict_val, final_predict_index = inference(img, checkpoint_dir, sessMap, grapMap, siteId)
             # 给出top 3预测，candidate1是概率最高的预测
@@ -231,7 +232,7 @@ def domain(images, siteId, sessMap, grapMap):
     for i in range(len(text)):
         result = result + text[i]
 
-    logger.info("siteId: " + str(siteId) + "===" + "共" + str(len(images)) + "个图片" + "===" + '返回' + str(len(result)) + "个字符==='用时'"+str(time.time() - start)+'结果: ' + result)
+#    logger.info("siteId: " + str(siteId) + "===" + "共" + str(len(images)) + "个图片" + "===" + '返回' + str(len(result)) + "个字符==='用时'"+str(time.time() - start)+'结果: ' + result)
 
     return result
 
@@ -261,7 +262,7 @@ if __name__ == "__main__":
     sessMap = {}
     grapMap = {}
     siteId = "40001"
-    filename = "/Users/shangzhen/PycharmProjects/CPS-OCR-Engine-master/ocr/tmp/796DF74A1107FE3995622D3299665E19.png"
+    filename = "/Users/shangzhen/verify/test/spilt_1527229227262.png"
     for i in range(2):
         time1 = time.time()
         img = Image.open(filename)
