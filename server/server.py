@@ -106,9 +106,7 @@ class GetHandler(BaseHTTPRequestHandler):
                     j = cracker_map[key]
                     data = {
                         "id": j["id"],
-                        "图片宽度": j["w"],
-                        "图片高度": j["h"],
-                        "最大长度": j["steps"],
+                        "type": j["type"],
                         "模型文件": j["file_name"],
                         "模型版本": j["version"]
                     }
