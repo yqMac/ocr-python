@@ -34,29 +34,9 @@ def list_model_count():
     lists = os.listdir(model_path)
     count = 0
     for one in lists:
-        if not one.startswith(".") and one.endswith(".npz"):
-            count += 1
         if not one.startswith(".") and one.endswith(".pth"):
             count += 1
     return count
-
-
-# 监听文件夹的处理方法
-class FileEventHandler(FileSystemEventHandler):
-    def __init__(self):
-        FileSystemEventHandler.__init__(self)
-
-    def on_moved(self, event):
-        print '1'
-
-    def on_created(self, event):
-        print '2'
-
-    def on_deleted(self, event):
-        print '3'
-
-    def on_modified(self, event):
-        print '4'
 
 
 def addCRNNModel(one):
@@ -64,10 +44,8 @@ def addCRNNModel(one):
         logger.info('loading pretrained model from {}'.format(one))
         if not one.endswith(".pth"):
             return
-        h = one.split("_")[-5]
-        w = one.split("_")[-4]
         id = one.split("_")[-3]
-        steps = one.split("_")[-2]
+        rate = one.split("_")[-2]
         version = "1.0"
         model = crnn.CRNN(32, 1, 37, 256)
         model = torch.nn.DataParallel(model)
@@ -91,9 +69,7 @@ def addCRNNModel(one):
         model.eval()
         model_data = {
             "id": id,
-            "w": w,
-            "h": h,
-            "steps": steps,
+            "rate": rate,
             "id_cracker": model,
             "file_name": one,
             "version": version,
@@ -112,12 +88,6 @@ def initModes():
             addCRNNModel(one)
         else:
             print("格式无法匹配模型theano或者crnn: {}".format(one))
-    # 启动文件夹监听服务
-    global observer
-    event_handler = FileEventHandler()
-    observer.schedule(event_handler, watcher_path, True)
-    observer.start()
-    observer.join()
 
 
 # 处理网络请求
@@ -196,6 +166,7 @@ class GetHandler(BaseHTTPRequestHandler):
                     image = image.view(1, *image.size())
                     image = Variable(image)
                     preds = cracker(image)
+
                     _, preds = preds.max(2)
                     preds = preds.transpose(1, 0).contiguous().view(-1)
                     preds_size = Variable(torch.IntTensor([preds.size(0)]))
@@ -292,7 +263,6 @@ mod_config.setPath(".")
 # 项目目录
 project_path = mod_config.getConfig("project", "path")
 if project_path is None or project_path == '':
-    # server_path = os.getcwd()
     server_path = os.path.split(os.path.realpath(__file__))[0]
     project_path = os.path.dirname(server_path)
 
@@ -302,16 +272,12 @@ if not os.path.exists(os.path.dirname(log_path)):
     os.makedirs(os.path.dirname(log_path))
 
 logger = Logger(log_path, logging.INFO, logging.INFO)
-# 线程锁，防止防止model时出问题
-# model_lock = thread.allocate_lock()
 # 读取models所在目录配置
 model_path = project_path + mod_config.getConfig("model_params", "path")
 
 font_path = project_path + mod_config.getConfig("font_params", "path")
-# 监控文件夹
-watcher_path = project_path + mod_config.getConfig("watcher_params", "path")
-logger.info('要监听的文件夹：{0}'.format(watcher_path))
 
+# 所有网络Model
 list_model = os.listdir(model_path)
 # 所有model的缓存
 cracker_map = {}
@@ -321,10 +287,7 @@ sessMap = {}
 # 所有graph缓存
 grapMap = {}
 
-# 监听服务
-observer = Observer()
-# 启线程加载Model
-threading.Thread(target=initModes).start()
+initModes()
 
 if __name__ == '__main__':
     # 读取服务发布端口
@@ -339,5 +302,4 @@ if __name__ == '__main__':
         print(e)
     finally:
         print('final')
-        observer.stop()
         sys.exit()
