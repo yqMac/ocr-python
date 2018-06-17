@@ -115,29 +115,29 @@ def createDataset(outputPath, imagePathList, outputHead, regexStr, checkValid=Tr
             # match = re.compile("^(.*)\..+$").match(imagePath.split("/")[-1])
             label = match.group(1)
 
-            # with open(imagePath, 'r') as f:
-            #     imageBin = f.read()
-            # if checkValid:
-            #     if not checkImageIsValid(imageBin):
-            #         print('%s is not a valid image' % imagePath)
-            #         continue
+            with open(imagePath, 'r') as f:
+                imageBin = f.read()
+                if checkValid:
+                    if not checkImageIsValid(imageBin):
+                        print('%s is not a valid image' % imagePath)
+                        continue
 
-            imageKey = 'image-%09d' % cnt
-            labelKey = 'label-%09d' % cnt
-            cache[imageKey] = imageBin
-            cache[labelKey] = label
-            if (i + 1) % 1000 == 0:
-                if (i + 1) <= train_size:
-                    writeCache(env_train, cache)
-                    print('Written train %d / %d' % (cnt, train_size))
-                    cache = {}
-                    if cnt == train_size:
-                        cnt = 0
-                else:
-                    writeCache(env_val, cache)
-                    print('Written val %d / %d' % (cnt, val_size))
-                    cache = {}
-            cnt += 1
+                imageKey = 'image-%09d' % cnt
+                labelKey = 'label-%09d' % cnt
+                cache[imageKey] = imageBin
+                cache[labelKey] = label
+                if (i + 1) % 1000 == 0:
+                    if (i + 1) <= train_size:
+                        writeCache(env_train, cache)
+                        print('Written train %d / %d' % (cnt, train_size))
+                        cache = {}
+                        if cnt == train_size:
+                            cnt = 0
+                    else:
+                        writeCache(env_val, cache)
+                        print('Written val %d / %d' % (cnt, val_size))
+                        cache = {}
+                cnt += 1
         except Exception as e:
             print("the image {0} is error{1}".format(imagePath, e.message))
     cache['num-samples'] = str(val_size)
