@@ -70,8 +70,8 @@ def createDataset(outputPath, imagePathList, outputHead, regexStr, checkValid=Tr
             print('%s is not match regex' % p)
             imagePathList.remove(p)
             continue
-        with open(p, 'r') as f:
-            imageBin = f.read()
+        # with open(p, 'r') as f:
+        #     imageBin = f.read()
         # if checkValid:
         #     if not checkImageIsValid(imageBin):
         #         print('%s is not a valid image' % p)
