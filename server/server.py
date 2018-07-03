@@ -160,14 +160,15 @@ class GetHandler(BaseHTTPRequestHandler):
 
                     site = data["site"]
                     if 'all' == site:
-                        for k, v in cracker_map:
-                            cracker = v["id_cracker"]
+                        for key in cracker_map:
+                            cracker_data = cracker_map[key]
+                            cracker = cracker_data["id_cracker"]
                             preds = cracker(image)
                             _, preds = preds.max(2)
                             preds = preds.transpose(1, 0).contiguous().view(-1)
                             preds_size = Variable(torch.IntTensor([preds.size(0)]))
                             sim_pred = converter.decode(preds.data, preds_size.data, raw=False)
-                            result[k] = sim_pred
+                            result[key] = sim_pred
                             if not result.has_key("result"):
                                 result['result'] = sim_pred
                         result["success"] = True
