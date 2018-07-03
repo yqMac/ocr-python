@@ -140,7 +140,7 @@ class GetHandler(BaseHTTPRequestHandler):
             if (not data.has_key("image")) or data['image'] == "":
                 result["success"] = False
                 result["msg"] = "image不能为空"
-            elif data.has_key("site") and not cracker_map.has_key(data["site"]):
+            elif data.has_key("site") and data['site'] != 'all' and not cracker_map.has_key(data["site"]):
                 result["msg"] = "无匹配Site"
             elif not data.has_key("site"):
                 result["msg"] = "site不能为空"
