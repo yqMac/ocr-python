@@ -260,7 +260,7 @@ cracker_map = {}
 initModes()
 def writePid():
     pid = str(os.getpid())
-    f = open('athena.pid', 'w')
+    f = open('pyocr.pid', 'w')
     f.write(pid)
     f.close()
 
