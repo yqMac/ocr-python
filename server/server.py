@@ -140,36 +140,48 @@ class GetHandler(BaseHTTPRequestHandler):
             if (not data.has_key("image")) or data['image'] == "":
                 result["success"] = False
                 result["msg"] = "image不能为空"
-            elif data.has_key("site") and not cracker_map.has_key(data["site"]):
+            elif data.has_key("site") and data['site'] != 'all' and not cracker_map.has_key(data["site"]):
                 result["msg"] = "无匹配Site"
             elif not data.has_key("site"):
                 result["msg"] = "site不能为空"
             else:
                 try:
-                    site = data["site"]
-                    cracker_data = cracker_map[site]
                     image_data = data['image']
                     missing_padding = 4 - len(image_data) % 4
                     if missing_padding:
                         image_data += b'=' * missing_padding
                     image_data = base64.b64decode(image_data)
-                    # model_data = {"id": id, "w": w, "h": h, "steps": steps, "id_cracker": id_cracker}
-                    type = cracker_data["type"]
-                    cracker = cracker_data["id_cracker"]
                     image = Image.open(BytesIO(image_data)).convert('L')
                     image = transformer(image)
                     if torch.cuda.is_available():
                         image = image.cuda()
                     image = image.view(1, *image.size())
                     image = Variable(image)
-                    preds = cracker(image)
 
-                    _, preds = preds.max(2)
-                    preds = preds.transpose(1, 0).contiguous().view(-1)
-                    preds_size = Variable(torch.IntTensor([preds.size(0)]))
-                    sim_pred = converter.decode(preds.data, preds_size.data, raw=False)
-                    result["result"] = sim_pred
-                    result["success"] = True
+                    site = data["site"]
+                    if 'all' == site:
+                        for key in cracker_map:
+                            cracker_data = cracker_map[key]
+                            cracker = cracker_data["id_cracker"]
+                            preds = cracker(image)
+                            _, preds = preds.max(2)
+                            preds = preds.transpose(1, 0).contiguous().view(-1)
+                            preds_size = Variable(torch.IntTensor([preds.size(0)]))
+                            sim_pred = converter.decode(preds.data, preds_size.data, raw=False)
+                            result[key] = sim_pred
+                            if not result.has_key("result"):
+                                result['result'] = sim_pred
+                        result["success"] = True
+                    else:
+                        cracker_data = cracker_map[site]
+                        cracker = cracker_data["id_cracker"]
+                        preds = cracker(image)
+                        _, preds = preds.max(2)
+                        preds = preds.transpose(1, 0).contiguous().view(-1)
+                        preds_size = Variable(torch.IntTensor([preds.size(0)]))
+                        sim_pred = converter.decode(preds.data, preds_size.data, raw=False)
+                        result['result'] = sim_pred
+                        result["success"] = True
                 except Exception, e:
                     result["msg"] = "识别过程发生异常"
                     result["ex"] = e.message
