@@ -286,8 +286,14 @@ sessMap = {}
 grapMap = {}
 
 initModes()
+def writePid():
+    pid = str(os.getpid())
+    f = open('pyocr.pid', 'w')
+    f.write(pid)
+    f.close()
 
 if __name__ == '__main__':
+    writePid()
     # 读取服务发布端口
     port = mod_config.getConfig("server", "port")
     try:
